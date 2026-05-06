@@ -9,7 +9,7 @@
      },
      "ghcr.io/devcontainers/features/ruby:1": {}
    },
-   "postCreateCommand": "sudo apt-get update && sudo apt-get install -y libxtst6 libxi6 libxrender1 && npm install -g fsh-sushi && sushi --version",
+   "postCreateCommand": "sudo apt-get update && sudo apt-get install -y libxtst6 libxi6 libxrender1 && gem install jekyll && npm install -g fsh-sushi && sushi --version",
    "customizations": {
      "vscode": {
        "extensions": [
