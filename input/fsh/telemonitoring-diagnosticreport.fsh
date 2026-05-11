@@ -45,7 +45,7 @@ Description: "A DiagnosticReport profile for sharing telemonitoring observations
 * extension contains
     TelemonitoringId named telemonitoringId 1..1 and
     Carepath named carepath 0..1 and
-    PrescriberApplication named prescriberApplication 0..1
+    PrescriberApplication named prescriberApplication 0..1 and
     SourceTelemonitoringReport named sourceTelemonitoringReport 0..*
 
 * status MS
@@ -72,6 +72,13 @@ Description: "An example prescriber"
 * name[0].family = "Johnson"
 * name[0].given[0] = "Difoolus"
 
+Instance: SourceDiagnosticReportExample
+InstanceOf: DiagnosticReport
+Description: "An example source diagnostic report"
+* status = #final
+* code = http://loinc.org#10185-7 "Holter study"
+* subject = Reference(PatientExample)
+
 // ---- Example instance ----
 
 Instance: TelemonitoringDiagnosticReportExample
@@ -82,7 +89,7 @@ Description: "An example of a telemonitoring diagnostic report based on the TMP 
 * extension[carepath].extension[carepathId].valueString = "holter-monitoring"
 * extension[carepath].extension[version].valueString = "1.0"
 * extension[prescriberApplication].valueString = "TeleMonApp v2.1"
-* extension[sourceTelemonitoringReport].valueReference = Reference(DiagnosticReportExample)  // <-- links source to result
+* extension[sourceTelemonitoringReport].valueReference = Reference(SourceDiagnosticReportExample)
 * status = #registered
 * code = http://example.org/service-types#telemonitoring "Telemonitoring"
 * subject = Reference(PatientExample)
