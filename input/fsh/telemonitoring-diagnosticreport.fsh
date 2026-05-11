@@ -28,6 +28,13 @@ Description: "The application used by the prescriber to initiate the telemonitor
 * value[x] only string
 * valueString 1..1
 
+Extension: SourceTelemonitoringReport
+Id: source-telemonitoring-report
+Title: "Source Telemonitoring Report"
+Description: "Identifies the original report that was used to generate this telemonitoring report, if applicable."
+* value[x] only Reference(DiagnosticReport)
+* valueReference 1..1
+
 // ---- Profile ----
 
 Profile: TelemonitoringDiagnosticReport
@@ -38,8 +45,8 @@ Description: "A DiagnosticReport profile for sharing telemonitoring observations
 * extension contains
     TelemonitoringId named telemonitoringId 1..1 and
     Carepath named carepath 0..1 and
-    PrescriberApplication named prescriberApplication 0..1 and
-    PatientAuthentication named patientAuthentication 0..1
+    PrescriberApplication named prescriberApplication 0..1
+    SourceTelemonitoringReport named sourceTelemonitoringReport 0..*
 
 * status MS
 * code 1..1 MS
@@ -53,11 +60,17 @@ Description: "A DiagnosticReport profile for sharing telemonitoring observations
 
 // ---- Example supporting resources ----
 
+Instance: PatientExample
+InstanceOf: Patient
+Description: "An example patient"
+* name[0].family = "Tables"
+* name[0].given[0] = "Bobby"
+
 Instance: PrescriberExample
 InstanceOf: Practitioner
 Description: "An example prescriber"
-* name[0].family = "Janssen"
-* name[0].given[0] = "Peter"
+* name[0].family = "Johnson"
+* name[0].given[0] = "Difoolus"
 
 // ---- Example instance ----
 
@@ -69,6 +82,7 @@ Description: "An example of a telemonitoring diagnostic report based on the TMP 
 * extension[carepath].extension[carepathId].valueString = "holter-monitoring"
 * extension[carepath].extension[version].valueString = "1.0"
 * extension[prescriberApplication].valueString = "TeleMonApp v2.1"
+* extension[sourceTelemonitoringReport].valueReference = Reference(DiagnosticReportExample)  // <-- links source to result
 * status = #registered
 * code = http://example.org/service-types#telemonitoring "Telemonitoring"
 * subject = Reference(PatientExample)
