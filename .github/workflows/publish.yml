@@ -36,6 +36,12 @@ jobs:
 
       - name: Install SUSHI
         run: npm install -g fsh-sushi
+        
+      - name: Install Jekyll
+        run: |
+           sudo apt-get update
+           sudo apt-get install -y ruby-full build-essential
+           gem install jekyll bundler
 
       - name: Download IG Publisher
         run: |
