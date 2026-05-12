@@ -23,6 +23,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache IG Publisher
+        uses: actions/cache@v4
+        with:
+          path: input-cache/publisher.jar
+          key: publisher-jar-${{ hashFiles('.github/workflows/publish.yml') }}
+      
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-cache-${{ hashFiles('**/package-lock.json') }}
+      
+      - name: Cache gem packages
+        uses: actions/cache@v4
+        with:
+          path: /var/lib/gems
+          key: gem-cache-${{ hashFiles('**/Gemfile.lock') }}
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
