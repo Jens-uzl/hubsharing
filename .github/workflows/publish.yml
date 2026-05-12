@@ -43,10 +43,14 @@ jobs:
           curl -L https://github.com/HL7/fhir-ig-publisher/releases/latest/download/publisher.jar \
             -o input-cache/publisher.jar
 
+      - name: Clear package cache                                                                                                          │
+        run: |
+          rm -rf ~/.fhir/packages/* || true 
+        
       - name: Run IG Publisher
         run: |
           export JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
-          java -jar input-cache/publisher.jar -ig . -auto-ig-build -tx n/a
+          java -jar input-cache/publisher.jar -ig . -tx n/a
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
