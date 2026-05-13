@@ -51,9 +51,21 @@ dependencies:
 # with supported extensions (e.g., .md/.xml) will be treated as
 # sub-pages.
 #
-# pages:
-#   index.md:
-#     title: Example Home
+pages:
+  # itemize here each narrative page. Include assigned section numbers when appropriate. The order they appear here is the order they will appear in the TOC and on the next/prev navigation
+  index.md:
+    title: Hub sharing Implementation Guide Proposal
+  resource-considerations.md:
+    title: Explanation of resources considered for this IG
+  mapping-telemonitoring-to-hub.md: 
+    title: Mapping Telemonitoring to Hub Sharing
+  mapping-kmehr-to-hub.md: 
+    title: Mapping KMEHR RAD.MADO to Hub Sharing
+  tmp-base-message.md:
+    title: Telemonitoring Project Current Base Message Example
+  transactions.md:
+    title: Transactions
+  
 #   implementation.xml:
 #   examples.xml:
 #     title: Examples Overview
