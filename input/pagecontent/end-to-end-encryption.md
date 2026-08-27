@@ -90,7 +90,7 @@ flowchart TD
 JWE keeps payload encryption inside the JSON world the rest of the exchange already inhabits:
 1. The originating system serializes the complete FHIR Document Bundle (`Bundle.type = #document`).
 2. The JSON string is encrypted into a **JWE (RFC 7516)** compact or general JSON serialization using AES-GCM (e.g. `A256GCM`) with the recipient's public key (RSA-OAEP-256 or ECDH-ES) fetched from the eHealth ETK depot.
-3. The encrypted JWE is stored as a FHIR **`Binary`** resource (`contentType = application/jose`) or embedded inside the `BeInterhubDocumentReference.content.attachment.data` (element specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference)).
+3. The encrypted JWE is stored as a FHIR **`Binary`** resource (`contentType = application/jose`) or encrypted document endpoint, retrievable via `BeInterhubDocumentReference.content.attachment.url` (element specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference)).
 
 #### Structure in `BeInterhubDocumentReference`:
 ```json

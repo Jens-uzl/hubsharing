@@ -38,6 +38,10 @@ dependencies:
     id: bePatientMonitoring
     uri: http://hl7belgium.org/fhir/patient-monitoring/ImplementationGuide/hl7.fhir.be.patient-monitoring
     version: current
+  ihe.iti.mhd:
+    id: iheMhd
+    uri: https://profiles.ihe.net/ITI/MHD/ImplementationGuide/ihe.iti.mhd
+    version: 4.2.2
 
 pages:
   index.md:
@@ -62,6 +66,10 @@ pages:
     title: TMP Base Message (Telemonitoring Appendix)
   mapping-kmehr-to-hub.md:
     title: KMEHR to FHIR MHD Mapping Matrix
+  ihe-mhd-alignment.md:
+    title: IHE MHD Alignment & Open Discussions
+  minimal-vs-comprehensive.md:
+    title: Minimal vs. Comprehensive DocumentReference
   ehds-alignment.md:
     title: European Health Data Space (EHDS) Alignment
 
@@ -83,6 +91,8 @@ menu:
     TMP Base Message: tmp-base-message.html
   Migration & Alignment:
     KMEHR to FHIR Mapping: mapping-kmehr-to-hub.html
+    IHE MHD Alignment (Discussion): ihe-mhd-alignment.html
+    Minimal vs. Comprehensive: minimal-vs-comprehensive.html
     EHDS Alignment: ehds-alignment.html
   Artifacts: artifacts.html
 

@@ -1,11 +1,11 @@
 // =========================================================================
-// Profile: Belgian Interhub DocumentReference (IHE MHD Comprehensive)
+// Profile: Belgian Interhub Minimal DocumentReference (IHE MHD Minimal)
 // =========================================================================
-Profile: BeInterhubDocumentReference
-Parent: IHE.MHD.Comprehensive.DocumentReference
-Id: be-interhub-documentreference
-Title: "Belgian Interhub DocumentReference (IHE MHD Comprehensive)"
-Description: "Belgian metadata carrier profile for health document discovery (MHD ITI-67 / getTransactionList) and document retrieval (MHD ITI-68 / getTransaction). Conforms strictly to IHE MHD Comprehensive DocumentReference with Contained References, embedding national Belgian core profiles (BePatient, BePractitioner, BeOrganization) to convey multi-author attribution and patient demographics without cross-hub dereferencing."
+Profile: BeInterhubMinimalDocumentReference
+Parent: IHE.MHD.Minimal.DocumentReference
+Id: be-interhub-minimal-documentreference
+Title: "Belgian Interhub Minimal DocumentReference (IHE MHD Minimal)"
+Description: "Lightweight Belgian metadata carrier profile for health document discovery and retrieval based on IHE.MHD.Minimal.DocumentReference. Intended for mobile ingest, edge nodes, simplified publication, or non-clinical document references where mandatory Comprehensive attributes (such as facilityType, practiceSetting, contained sourcePatientInfo snapshot, or mandatory creation timestamp) are not required or not available."
 
 * ^status = #active
 * ^version = "0.2.0"
@@ -50,25 +50,25 @@ Description: "Belgian metadata carrier profile for health document discovery (MH
 * status from DocumentReferenceStats (required)
 
 // -------------------------------------------------------------------------
-// Category & Clinical Type
+// Category & Clinical Type (Optional in Minimal)
 // -------------------------------------------------------------------------
-* category 1..1 MS
+* category 0..1 MS
 * category from BeVSCDTransaction (extensible)
-* category.coding 1..* MS
+* category.coding 0..* MS
 * category.coding ^slicing.discriminator.type = #value
 * category.coding ^slicing.discriminator.path = "system"
 * category.coding ^slicing.rules = #open
-* category.coding contains cdTransactionCode 1..1 MS
+* category.coding contains cdTransactionCode 0..1 MS
 * category.coding[cdTransactionCode].system = "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-transaction" (exactly)
 * category.coding[cdTransactionCode].code 1..1 MS
 
-* type 1..1 MS
-* type.coding 1..* MS
-* type.coding.system 1..1 MS
-* type.coding.code 1..1 MS
+* type 0..1 MS
+* type.coding 0..* MS
+* type.coding.system 0..1 MS
+* type.coding.code 0..1 MS
 
 // -------------------------------------------------------------------------
-// Subject & Contained SourcePatientInfo
+// Subject & Author References
 // -------------------------------------------------------------------------
 * subject 1..1 MS
 * subject only Reference($BePatient)
@@ -76,33 +76,21 @@ Description: "Belgian metadata carrier profile for health document discovery (MH
 * subject.identifier.system = $BE-NS-SSIN
 * subject.identifier ^short = "Patient SSIN/INSS identifier carried inline"
 
-* context 1..1 MS
-* context.sourcePatientInfo 1..1 MS
-* context.sourcePatientInfo only Reference($BePatient)
-* context.sourcePatientInfo ^type.aggregation = #contained
-* context.sourcePatientInfo ^short = "Contained BePatient resource providing snapshot demographic data"
-
-// -------------------------------------------------------------------------
-// Contained Authors, Authenticator, Custodian
-// -------------------------------------------------------------------------
-* author 1..* MS
+* author 0..* MS
 * author only Reference($BePractitioner or $BePractitionerRole or $BeOrganization or Device or $BePatient or RelatedPerson)
-* author ^type.aggregation = #contained
 * author.extension contains BeExtHcPartyType named hcPartyType 0..1 MS
-* author ^short = "Contained authoring parties (Answering Hub, Hospital/Lab Organisation, Practitioner, Software)"
+* author ^short = "Authoring parties (may be external or contained references)"
 
 * authenticator 0..1 MS
 * authenticator only Reference($BePractitioner or $BePractitionerRole or $BeOrganization)
-* authenticator ^type.aggregation = #contained
 * authenticator.extension contains BeExtHcPartyType named hcPartyType 0..1 MS
-* authenticator ^short = "Contained legal validating party"
 
 * custodian 0..1 MS
 * custodian only Reference($BeOrganization)
 * custodian.extension contains BeExtHcPartyType named hcPartyType 0..1 MS
 
 // -------------------------------------------------------------------------
-// Relationships (Logical Business Identifier Target)
+// Relationships
 // -------------------------------------------------------------------------
 * relatesTo 0..* MS
 * relatesTo.code 1..1 MS
@@ -110,22 +98,24 @@ Description: "Belgian metadata carrier profile for health document discovery (MH
 * relatesTo.target.identifier 1..1 MS
 * relatesTo.target.identifier.system = "urn:ietf:rfc:3986" (exactly)
 * relatesTo.target.identifier.value 1..1 MS
-* relatesTo.target.identifier ^short = "uniqueId of the related document (RFC 3986 URI)"
 
 // -------------------------------------------------------------------------
-// Mandatory MHD Comprehensive Content & Context Fields
+// Content & Context (Minimal metadata)
 // -------------------------------------------------------------------------
-* securityLabel 1..* MS
+* securityLabel 0..* MS
 * securityLabel from http://terminology.hl7.org/ValueSet/v3-Confidentiality (extensible)
 
 * content 1..1 MS
 * content.attachment.contentType 1..1 MS
-* content.attachment.language 1..1 MS
 * content.attachment.url 1..1 MS
-* content.attachment.creation 1..1 MS
-* content.format 1..1 MS
+* content.attachment.language 0..1 MS
+* content.attachment.creation 0..1 MS
+* content.format 0..1 MS
 * content.format from BeVSInterhubFormatCodes (extensible)
 
-* context.facilityType 1..1 MS
-* context.practiceSetting 1..1 MS
+* context 0..1 MS
+* context.facilityType 0..1 MS
+* context.practiceSetting 0..1 MS
 * context.period 0..1 MS
+* context.sourcePatientInfo 0..1 MS
+* context.sourcePatientInfo only Reference($BePatient)

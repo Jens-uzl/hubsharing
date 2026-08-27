@@ -49,7 +49,7 @@ flowchart TD
 
 | EHDS Profile / Element | Belgian Interhub Profile / Element | Interoperability & Conformance Notes |
 | :--- | :--- | :--- |
-| **`DocumentReferenceEu`** | **`BeInterhubDocumentReference`** | `BeInterhubDocumentReference` satisfies all mandatory elements of `DocumentReferenceEu` (subject, status, docStatus, type, category, date, author, attachment). It adds Belgian-specific extensions for `homeCommunityId`, `patientAccess`, and `recordDateTime`. |
+| **`DocumentReferenceEu`** | **`BeInterhubDocumentReference`** | `BeInterhubDocumentReference` satisfies all mandatory elements of `DocumentReferenceEu` (subject, status, type, category, date, author, attachment) while conforming to `IHE.MHD.Comprehensive.DocumentReference`. It embeds contained resources and adds Belgian-specific extensions for `homeCommunityId`, `patientAccess`, and `recordDateTime`. |
 | **`Composition-eu-lab`** | **`BeInterhubLabComposition`** | Both profiles require LOINC `11502-2` ("Laboratory report"), mandatory patient subject, author attribution, and structured narrative sections containing laboratory observation entries. |
 | **`DiagnosticReport-eu-lab`** | **`BeLaboratoryReport`** (HL7 Belgium) | Sliced category containing `v2-0074#LAB`, mandatory `code`, `performer`, `issued`, and referenced `Observation` and `Specimen` resources. |
 | **`Observation-resultslab-eu-lab`** | **`BeObservationLaboratory`** / Core Observation | Standard LOINC test coding, UCUM unit representation, and reference ranges. |

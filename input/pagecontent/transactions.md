@@ -104,15 +104,99 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
   "total": 1,
   "entry": [
     {
-      "fullUrl": "https://hub.cozo.be/fhir/DocumentReference/docref-lab-example-01",
+      "fullUrl": "https://hub.cozo.be/fhir/DocumentReference/DocRefLabReportContainedExample",
       "resource": {
         "resourceType": "DocumentReference",
-        "id": "docref-lab-example-01",
+        "id": "DocRefLabReportContainedExample",
         "meta": {
           "profile": [
             "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-interhub-documentreference"
           ]
         },
+        "contained": [
+          {
+            "resourceType": "Patient",
+            "id": "ContainedPatient",
+            "identifier": [
+              {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin",
+                "value": "79080412345"
+              }
+            ],
+            "name": [
+              {
+                "family": "Peeters",
+                "given": [ "Jan" ]
+              }
+            ],
+            "gender": "male",
+            "birthDate": "1979-08-04"
+          },
+          {
+            "resourceType": "Organization",
+            "id": "ContainedHubCoZo",
+            "identifier": [
+              {
+                "system": "urn:ietf:rfc:3986",
+                "value": "urn:oid:1.3.6.1.4.1.21297.1.3"
+              }
+            ],
+            "type": [
+              {
+                "coding": [
+                  {
+                    "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                    "code": "application",
+                    "display": "software application"
+                  }
+                ]
+              }
+            ],
+            "name": "CoZo Regional Hub"
+          },
+          {
+            "resourceType": "Organization",
+            "id": "ContainedOrgUZLeuven",
+            "identifier": [
+              {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/nihdi",
+                "value": "71000012"
+              },
+              {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/cbe",
+                "value": "0419052173"
+              }
+            ],
+            "type": [
+              {
+                "coding": [
+                  {
+                    "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                    "code": "orghospital",
+                    "display": "hospital"
+                  }
+                ]
+              }
+            ],
+            "name": "UZ Leuven"
+          },
+          {
+            "resourceType": "Practitioner",
+            "id": "ContainedDrGovaerts",
+            "identifier": [
+              {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/nihdi",
+                "value": "10000007999"
+              }
+            ],
+            "name": [
+              {
+                "family": "Govaerts",
+                "given": [ "Danièle" ]
+              }
+            ]
+          }
+        ],
         "extension": [
           {
             "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-home-community-id",
@@ -124,6 +208,10 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
               { "url": "access", "valueCode": "yes" },
               { "url": "accessDate", "valueDate": "2026-03-15" }
             ]
+          },
+          {
+            "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-record-datetime",
+            "valueInstant": "2026-03-15T10:35:00Z"
           }
         ],
         "masterIdentifier": {
@@ -134,10 +222,17 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
           {
             "system": "urn:ietf:rfc:3986",
             "value": "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933567"
+          },
+          {
+            "system": "urn:ietf:rfc:3986",
+            "value": "urn:uuid:8b3e2365-5136-46b5-901d-5b32ec8ef991"
+          },
+          {
+            "system": "https://uzleuven.be/lab/reports",
+            "value": "LAB-2026-03-815933567"
           }
         ],
         "status": "current",
-        "docStatus": "final",
         "category": [
           {
             "coding": [
@@ -159,6 +254,7 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
           ]
         },
         "subject": {
+          "reference": "Patient/PatientPeeters",
           "identifier": {
             "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin",
             "value": "79080412345"
@@ -166,9 +262,95 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
         },
         "date": "2026-03-15T10:30:00Z",
         "author": [
-          { "display": "CoZo Regional Hub" },
-          { "display": "UZ Leuven" },
-          { "display": "Dr. Danièle Govaerts" }
+          {
+            "extension": [
+              {
+                "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type",
+                "valueCoding": {
+                  "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                  "code": "application",
+                  "display": "software application"
+                }
+              }
+            ],
+            "reference": "#ContainedHubCoZo"
+          },
+          {
+            "extension": [
+              {
+                "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type",
+                "valueCoding": {
+                  "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                  "code": "orghospital",
+                  "display": "hospital"
+                }
+              }
+            ],
+            "reference": "#ContainedOrgUZLeuven"
+          },
+          {
+            "extension": [
+              {
+                "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type",
+                "valueCoding": {
+                  "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                  "code": "persphysician",
+                  "display": "physician"
+                }
+              }
+            ],
+            "reference": "#ContainedDrGovaerts"
+          }
+        ],
+        "authenticator": {
+          "extension": [
+            {
+              "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type",
+              "valueCoding": {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                "code": "persphysician",
+                "display": "physician"
+              }
+            }
+          ],
+          "reference": "#ContainedDrGovaerts"
+        },
+        "custodian": {
+          "extension": [
+            {
+              "url": "https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type",
+              "valueCoding": {
+                "system": "https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-hcparty",
+                "code": "orghospital",
+                "display": "hospital"
+              }
+            }
+          ],
+          "reference": "#ContainedOrgUZLeuven"
+        },
+        "relatesTo": [
+          {
+            "code": "replaces",
+            "target": {
+              "identifier": {
+                "system": "urn:ietf:rfc:3986",
+                "value": "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933566"
+              },
+              "display": "Preliminary laboratory report of 2026-03-15 08:40"
+            }
+          }
+        ],
+        "description": "Comprehensive Blood Biochemistry and Hematology Laboratory Report",
+        "securityLabel": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-Confidentiality",
+                "code": "N",
+                "display": "Normal"
+              }
+            ]
+          }
         ],
         "content": [
           {
@@ -176,7 +358,8 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
               "contentType": "application/fhir+json",
               "language": "nl-BE",
               "url": "https://hub.cozo.be/fhir/Bundle/bundle-lab-report-example-01",
-              "title": "Lab Report - Peeters Jan"
+              "title": "Lab Report - Peeters Jan",
+              "creation": "2026-03-15T10:30:00Z"
             },
             "format": {
               "system": "https://www.ehealth.fgov.be/standards/fhir/interhub/CodeSystem/be-cs-interhub-format-codes",
@@ -184,7 +367,34 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
               "display": "Belgian Lab Report FHIR Document (v1.0)"
             }
           }
-        ]
+        ],
+        "context": {
+          "period": {
+            "start": "2026-03-15T08:00:00Z",
+            "end": "2026-03-15T10:30:00Z"
+          },
+          "facilityType": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "257622000",
+                "display": "Healthcare related organization"
+              }
+            ]
+          },
+          "practiceSetting": {
+            "coding": [
+              {
+                "system": "http://snomed.info/sct",
+                "code": "394595002",
+                "display": "Pathology"
+              }
+            ]
+          },
+          "sourcePatientInfo": {
+            "reference": "#ContainedPatient"
+          }
+        }
       }
     }
   ]
@@ -265,7 +475,6 @@ Below is a complete HTTP 200 OK searchset response: one matched laboratory docum
           ]
         },
         "status": "current",
-        "docStatus": "final",
         "category": [
           {
             "coding": [
@@ -277,7 +486,17 @@ Below is a complete HTTP 200 OK searchset response: one matched laboratory docum
             ]
           }
         ],
+        "type": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11502-2",
+              "display": "Laboratory report"
+            }
+          ]
+        },
         "subject": {
+          "reference": "Patient/PatientPeeters",
           "identifier": {
             "system": "https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin",
             "value": "79080412345"
@@ -289,7 +508,8 @@ Below is a complete HTTP 200 OK searchset response: one matched laboratory docum
               "contentType": "application/fhir+json",
               "language": "nl-BE",
               "url": "https://hub.cozo.be/fhir/Bundle/bundle-lab-report-example-01",
-              "title": "Lab Report - Peeters Jan"
+              "title": "Lab Report - Peeters Jan",
+              "creation": "2026-03-15T10:30:00Z"
             },
             "format": {
               "system": "https://www.ehealth.fgov.be/standards/fhir/interhub/CodeSystem/be-cs-interhub-format-codes",

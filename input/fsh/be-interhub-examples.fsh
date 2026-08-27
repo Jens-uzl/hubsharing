@@ -81,9 +81,144 @@ Usage: #example
 * name = "CoZo (Collaboratief Zorgplatform)"
 
 // =========================================================================
-// METADATA ENVELOPE EXAMPLES (BeInterhubDocumentReference)
+// INLINE CONTAINED RESOURCE INSTANCES
 // =========================================================================
 
+Instance: ContainedPatient
+InstanceOf: BePatient
+Usage: #inline
+* identifier[SSIN].system = $BE-NS-SSIN
+* identifier[SSIN].value = "79080412345"
+* name[0].family = "Peeters"
+* name[0].given[0] = "Jan"
+* gender = #male
+* birthDate = "1979-08-04"
+
+Instance: ContainedHubCoZo
+InstanceOf: BeOrganization
+Usage: #inline
+* identifier[+].system = "urn:ietf:rfc:3986"
+* identifier[=].value = "urn:oid:1.3.6.1.4.1.21297.1.3"
+* type[CD-HCPARTY] = $BE-CS-CD-HCPARTY#application "software application"
+* name = "CoZo Regional Hub"
+
+Instance: ContainedOrgUZLeuven
+InstanceOf: BeOrganization
+Usage: #inline
+* identifier[NIHDI].system = $BE-NS-NIHDI
+* identifier[NIHDI].value = "71000012"
+* identifier[CBE].system = $BE-NS-CBE
+* identifier[CBE].value = "0419052173"
+* type[CD-HCPARTY] = $BE-CS-CD-HCPARTY#orghospital "hospital"
+* name = "UZ Leuven"
+
+Instance: ContainedDrGovaerts
+InstanceOf: BePractitioner
+Usage: #inline
+* identifier[NIHDI].system = $BE-NS-NIHDI
+* identifier[NIHDI].value = "10000007999"
+* name[0].family = "Govaerts"
+* name[0].given[0] = "Danièle"
+
+Instance: ContainedDrDepondt
+InstanceOf: BePractitioner
+Usage: #inline
+* identifier[NIHDI].system = $BE-NS-NIHDI
+* identifier[NIHDI].value = "19876543201"
+* name[0].family = "Depondt"
+* name[0].given[0] = "Jean"
+
+// =========================================================================
+// METADATA ENVELOPE EXAMPLES (BeInterhubDocumentReference - MHD Comprehensive)
+// =========================================================================
+
+Instance: DocRefLabReportContainedExample
+InstanceOf: BeInterhubDocumentReference
+Title: "DocumentReference: MHD Comprehensive Contained Lab Report"
+Description: "Example of a Belgian Interhub metadata envelope conforming to IHE MHD Comprehensive with contained BePatient, BePractitioner, and BeOrganization resources."
+Usage: #example
+
+// Belgian National Extensions
+* extension[homeCommunityId].valueUri = "urn:oid:1.3.6.1.4.1.21297.1.3"
+* extension[patientAccess].extension[access].valueCode = #yes
+* extension[patientAccess].extension[accessDate].valueDate = "2026-03-15"
+* extension[recordDateTime].valueInstant = "2026-03-15T10:35:00Z"
+
+// Identifiers
+* masterIdentifier.system = "urn:ietf:rfc:3986"
+* masterIdentifier.value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933567"
+
+* identifier[uniqueId].system = "urn:ietf:rfc:3986"
+* identifier[uniqueId].value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933567"
+
+* identifier[entryUUID].system = "urn:ietf:rfc:3986"
+* identifier[entryUUID].value = "urn:uuid:8b3e2365-5136-46b5-901d-5b32ec8ef991"
+
+* identifier[localId].system = "https://uzleuven.be/lab/reports"
+* identifier[localId].value = "LAB-2026-03-815933567"
+
+* status = #current
+
+// Categories & Clinical Type
+* category.coding[cdTransactionCode] = $BE-CS-CD-TRANSACTION#labresult "Laboratory Result"
+* type.coding[0] = $LNC#11502-2 "Laboratory report"
+
+// Patient Reference & Inline SSIN
+* subject = Reference(PatientPeeters)
+* subject.identifier.system = $BE-NS-SSIN
+* subject.identifier.value = "79080412345"
+
+* date = "2026-03-15T10:30:00Z"
+* description = "Comprehensive Blood Biochemistry and Hematology Laboratory Report"
+* securityLabel[0] = $V3-Confidentiality#N "Normal"
+
+// -------------------------------------------------------------------------
+// Contained Resources Definition
+// -------------------------------------------------------------------------
+* contained[0] = ContainedPatient
+* contained[1] = ContainedHubCoZo
+* contained[2] = ContainedOrgUZLeuven
+* contained[3] = ContainedDrGovaerts
+
+// Pointers to Contained Resources
+* context.sourcePatientInfo = Reference(ContainedPatient)
+
+* author[0] = Reference(ContainedHubCoZo)
+* author[0].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#application "software application"
+
+* author[1] = Reference(ContainedOrgUZLeuven)
+* author[1].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
+
+* author[2] = Reference(ContainedDrGovaerts)
+* author[2].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
+
+* authenticator = Reference(ContainedDrGovaerts)
+* authenticator.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
+
+* custodian = Reference(ContainedOrgUZLeuven)
+* custodian.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
+
+// Relationships
+* relatesTo[0].code = #replaces
+* relatesTo[0].target.identifier.system = "urn:ietf:rfc:3986"
+* relatesTo[0].target.identifier.value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933566"
+* relatesTo[0].target.display = "Preliminary laboratory report of 2026-03-15 08:40"
+
+// Payload Retrieval Attachment & Format
+* content[0].attachment.contentType = #application/fhir+json
+* content[0].attachment.language = #nl-BE
+* content[0].attachment.url = "https://hub.cozo.be/fhir/Bundle/bundle-lab-report-example-01"
+* content[0].attachment.title = "Lab Report - Peeters Jan"
+* content[0].attachment.creation = "2026-03-15T10:30:00Z"
+* content[0].format = #urn:be:fgov:ehealth:lab:document:1.0
+
+// Contextual Classification
+* context.facilityType = $SCT#257622000 "Healthcare related organization"
+* context.practiceSetting = $SCT#394595002 "Pathology"
+* context.period.start = "2026-03-15T08:00:00Z"
+* context.period.end = "2026-03-15T10:30:00Z"
+
+// DocRefLabReportExample kept as alias/mirror for references
 Instance: DocRefLabReportExample
 InstanceOf: BeInterhubDocumentReference
 Title: "DocumentReference: Lab Report Metadata"
@@ -97,60 +232,63 @@ Usage: #example
 * masterIdentifier.value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933567"
 * identifier[uniqueId].system = "urn:ietf:rfc:3986"
 * identifier[uniqueId].value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933567"
+* identifier[entryUUID].system = "urn:ietf:rfc:3986"
+* identifier[entryUUID].value = "urn:uuid:8b3e2365-5136-46b5-901d-5b32ec8ef991"
 * identifier[localId].system = "https://uzleuven.be/lab/reports"
 * identifier[localId].value = "LAB-2026-03-815933567"
 * status = #current
-* docStatus = #final
-* category[cdTransaction].coding[cdTransactionCode] = $BE-CS-CD-TRANSACTION#labresult "Laboratory Result"
-// The same category, additionally expressed in the hub source's own catalogue.
-* category[cdTransaction].coding[+].system = "https://uzleuven.be/fhir/CodeSystem/document-category"
-* category[cdTransaction].coding[=].code = #KLINBIO
-* category[cdTransaction].coding[=].display = "Klinische biologie - verslag"
+* category.coding[cdTransactionCode] = $BE-CS-CD-TRANSACTION#labresult "Laboratory Result"
 * type.coding[0] = $LNC#11502-2 "Laboratory report"
 * subject = Reference(PatientPeeters)
 * subject.identifier.system = $BE-NS-SSIN
 * subject.identifier.value = "79080412345"
 * date = "2026-03-15T10:30:00Z"
-* author[0] = Reference(HubCoZo)
+* description = "Comprehensive Blood Biochemistry and Hematology Laboratory Report"
+* securityLabel[0] = $V3-Confidentiality#N "Normal"
+* contained[0] = ContainedPatient
+* contained[1] = ContainedHubCoZo
+* contained[2] = ContainedOrgUZLeuven
+* contained[3] = ContainedDrGovaerts
+* context.sourcePatientInfo = Reference(ContainedPatient)
+* author[0] = Reference(ContainedHubCoZo)
 * author[0].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#application "software application"
-* author[0].identifier.system = "urn:ietf:rfc:3986"
-* author[0].identifier.value = "urn:oid:1.3.6.1.4.1.21297.1.3"
-* author[0].display = "CoZo (Collaboratief Zorgplatform)"
-* author[1] = Reference(OrgUZLeuven)
+* author[1] = Reference(ContainedOrgUZLeuven)
 * author[1].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
-* author[1].identifier.system = $BE-NS-NIHDI
-* author[1].identifier.value = "71000012"
-* author[1].display = "UZ Leuven"
-* author[2] = Reference(DrDanieleGovaerts)
+* author[2] = Reference(ContainedDrGovaerts)
 * author[2].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
-* author[2].identifier.system = $BE-NS-NIHDI
-* author[2].identifier.value = "10000007999"
-* author[2].display = "Dr. Danièle Govaerts"
-* authenticator = Reference(DrDanieleGovaerts)
+* authenticator = Reference(ContainedDrGovaerts)
 * authenticator.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
-* authenticator.identifier.system = $BE-NS-NIHDI
-* authenticator.identifier.value = "10000007999"
-* authenticator.display = "Dr. Danièle Govaerts"
-* custodian = Reference(OrgUZLeuven)
+* custodian = Reference(ContainedOrgUZLeuven)
 * custodian.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
-* custodian.identifier.system = $BE-NS-NIHDI
-* custodian.identifier.value = "71000012"
-* custodian.display = "UZ Leuven"
-// Relationship to the preliminary version of the same report, by business identifier only:
-// the consumer needs no additional query to know which document this one replaces.
 * relatesTo[0].code = #replaces
 * relatesTo[0].target.identifier.system = "urn:ietf:rfc:3986"
 * relatesTo[0].target.identifier.value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.815933566"
-* relatesTo[0].target.display = "Preliminary laboratory report of 2026-03-15 08:40" 
-* description = "Comprehensive Blood Biochemistry and Hematology Laboratory Report"
-* securityLabel[0] = $V3-Confidentiality#N "Normal"
+* relatesTo[0].target.display = "Preliminary laboratory report of 2026-03-15 08:40"
 * content[0].attachment.contentType = #application/fhir+json
 * content[0].attachment.language = #nl-BE
 * content[0].attachment.url = "https://hub.cozo.be/fhir/Bundle/bundle-lab-report-example-01"
 * content[0].attachment.title = "Lab Report - Peeters Jan"
+* content[0].attachment.creation = "2026-03-15T10:30:00Z"
 * content[0].format = #urn:be:fgov:ehealth:lab:document:1.0
+* context.facilityType = $SCT#257622000 "Healthcare related organization"
+* context.practiceSetting = $SCT#394595002 "Pathology"
 * context.period.start = "2026-03-15T08:00:00Z"
 * context.period.end = "2026-03-15T10:30:00Z"
+
+Instance: DocRefMinimalExample
+InstanceOf: BeInterhubMinimalDocumentReference
+Title: "DocumentReference: Minimal Metadata Example"
+Description: "Example lightweight metadata carrier conforming to BeInterhubMinimalDocumentReference (IHE MHD Minimal)."
+Usage: #example
+* extension[homeCommunityId].valueUri = "urn:oid:1.3.6.1.4.1.21297.1.3"
+* masterIdentifier.system = "urn:ietf:rfc:3986"
+* masterIdentifier.value = "urn:oid:1.3.6.1.4.1.21297.100.2.1.999000111"
+* status = #current
+* subject = Reference(PatientPeeters)
+* subject.identifier.system = $BE-NS-SSIN
+* subject.identifier.value = "79080412345"
+* content[0].attachment.contentType = #application/fhir+json
+* content[0].attachment.url = "https://hub.cozo.be/fhir/Bundle/bundle-minimal-example-01"
 
 Instance: DocRefTelemonitoringExample
 InstanceOf: BeInterhubDocumentReference
@@ -164,43 +302,40 @@ Usage: #example
 * masterIdentifier.value = "urn:uuid:7ed170b3-38d1-4ba5-8a60-1f722b107707"
 * identifier[uniqueId].system = "urn:ietf:rfc:3986"
 * identifier[uniqueId].value = "urn:uuid:7ed170b3-38d1-4ba5-8a60-1f722b107707"
+* identifier[entryUUID].system = "urn:ietf:rfc:3986"
+* identifier[entryUUID].value = "urn:uuid:7ed170b3-38d1-4ba5-8a60-1f722b107707"
 * identifier[localId].system = "http://example.org/telemonitoring-id"
 * identifier[localId].value = "tm-holter-001"
 * status = #current
-* docStatus = #final
-* category[cdTransaction].coding[cdTransactionCode] = $BE-CS-CD-TRANSACTION#telemonitoring "Telemonitoring / Remote Patient Monitoring"
+* category.coding[cdTransactionCode] = $BE-CS-CD-TRANSACTION#telemonitoring "Telemonitoring / Remote Patient Monitoring"
 * type.coding[0] = $LNC#18754-2 "Ambulatory cardiac rhythm monitor (Holter) study"
 * subject = Reference(PatientPeeters)
 * subject.identifier.system = $BE-NS-SSIN
 * subject.identifier.value = "79080412345"
 * date = "2026-01-02T08:30:00Z"
-* author[0] = Reference(HubCoZo)
-* author[0].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#application "software application"
-* author[0].identifier.system = "urn:ietf:rfc:3986"
-* author[0].identifier.value = "urn:oid:1.3.6.1.4.1.21297.1.3"
-* author[0].display = "CoZo (Collaboratief Zorgplatform)"
-* author[1] = Reference(OrgUZLeuven)
-* author[1].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
-* author[1].identifier.system = $BE-NS-NIHDI
-* author[1].identifier.value = "71000012"
-* author[1].display = "UZ Leuven"
-* author[2] = Reference(DrJeanDepondt)
-* author[2].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
-* author[2].identifier.system = $BE-NS-NIHDI
-* author[2].identifier.value = "19876543201"
-* author[2].display = "Dr. Jean Depondt"
-* custodian = Reference(OrgUZLeuven)
-* custodian.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
-* custodian.identifier.system = $BE-NS-NIHDI
-* custodian.identifier.value = "71000012"
-* custodian.display = "UZ Leuven"
 * description = "24-Hour Continuous Holter ECG Monitoring Summary"
 * securityLabel[0] = $V3-Confidentiality#N "Normal"
+* contained[0] = ContainedPatient
+* contained[1] = ContainedHubCoZo
+* contained[2] = ContainedOrgUZLeuven
+* contained[3] = ContainedDrDepondt
+* context.sourcePatientInfo = Reference(ContainedPatient)
+* author[0] = Reference(ContainedHubCoZo)
+* author[0].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#application "software application"
+* author[1] = Reference(ContainedOrgUZLeuven)
+* author[1].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
+* author[2] = Reference(ContainedDrDepondt)
+* author[2].extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#persphysician "physician"
+* custodian = Reference(ContainedOrgUZLeuven)
+* custodian.extension[hcPartyType].valueCoding = $BE-CS-CD-HCPARTY#orghospital "hospital"
 * content[0].attachment.contentType = #application/fhir+json
 * content[0].attachment.language = #nl-BE
 * content[0].attachment.url = "https://hub.cozo.be/fhir/Bundle/bundle-telemonitoring-example-01"
+* content[0].attachment.creation = "2026-01-02T08:30:00Z"
 * content[0].attachment.title = "Holter Monitoring Report - Jan Peeters"
 * content[0].format = #urn:be:fgov:ehealth:telemonitoring:document:1.0
+* context.facilityType = $SCT#257622000 "Healthcare related organization"
+* context.practiceSetting = $SCT#394579002 "Cardiology"
 * context.period.start = "2026-01-01T08:00:00Z"
 * context.period.end = "2026-01-02T08:00:00Z"
 
@@ -418,8 +553,8 @@ Description: "Example searchset Bundle returned when querying getTransactionList
 Usage: #example
 * type = #searchset
 * total = 2
-* entry[0].fullUrl = "https://hub.cozo.be/fhir/DocumentReference/DocRefLabReportExample"
-* entry[0].resource = DocRefLabReportExample
+* entry[0].fullUrl = "https://hub.cozo.be/fhir/DocumentReference/DocRefLabReportContainedExample"
+* entry[0].resource = DocRefLabReportContainedExample
 * entry[0].search.mode = #match
 * entry[1].fullUrl = "https://hub.cozo.be/fhir/DocumentReference/DocRefTelemonitoringExample"
 * entry[1].resource = DocRefTelemonitoringExample

@@ -3,7 +3,7 @@
 > **Where this page sits in the guide** — *Architecture*, page 2 of 2. This is the **why** behind every specification page: which FHIR paradigms were evaluated, which were rejected, and why `Bundle.type = #document` plus a decoupled `DocumentReference` was mandated. Readers who wonder *"why can't I just `GET /Observation`?"* should start here.
 >
 > * **Owned by this page:** the carrier-paradigm evaluation, document immutability and legal attestation, and the rationale for a decoupled discovery envelope.
-> * **Specified elsewhere:** the envelope fields → [Envelope & Metadata](envelope-and-metadata.html); the transactions that carry these bundles → [Transactions](transactions.html); concrete payloads → [Laboratory Reports](lab-report-sharing.html) and [Telemonitoring](mapping-telemonitoring-to-hub.html).
+> * **Specified elsewhere:** the envelope fields → [Envelope & Metadata](envelope-and-metadata.html); the transactions that carry these bundles → [Transactions](transactions.html); deep dive into IHE MHD profile choices → [IHE MHD Alignment](ihe-mhd-alignment.html); concrete payloads → [Laboratory Reports](lab-report-sharing.html) and [Telemonitoring](mapping-telemonitoring-to-hub.html).
 > * **Previous:** [Architecture & Federation Model](architecture.html) · **Next:** [Envelope & Metadata](envelope-and-metadata.html)
 
 ## 1. Context & Architectural Problem
@@ -12,7 +12,7 @@ FHIR offers several ways of moving clinical data between systems, and they are n
 1. **Clinical Integrity & Immutability**: A shared medical record (such as a laboratory report or discharge letter) must represent an authenticated snapshot in time that cannot change retroactively without explicit versioning.
 2. **Metadata Discovery vs. Content Retrieval**: Separation between lightweight search operations across millions of records and targeted content retrieval.
 3. **Decoupled Architecture**: Preserving autonomy between independent hub source systems (hospital EHRs, laboratory information systems, pharmacy and practice software) and regional hubs without requiring complex cross-enterprise database synchronization.
-4. **European Harmonization**: Alignment with the **European Health Data Space (EHDS)** and **IHE MHD**, analysed in [EHDS Alignment](ehds-alignment.html).
+4. **European Harmonization**: Alignment with the **European Health Data Space (EHDS)** and **IHE MHD**, analysed in [EHDS Alignment](ehds-alignment.html) and [IHE MHD Alignment](ihe-mhd-alignment.html).
 
 ---
 
@@ -56,32 +56,26 @@ The normative constraints implementing this decision (`Bundle.type`, `entry[0]`,
 
 ---
 
-## 3. The Role of `DocumentReference` as Discovery Envelope
+## 3. The Role of Contained MHD Comprehensive DocumentReference
 
-In accordance with **IHE MHD (ITI-67 / ITI-68)**, the metadata envelope (`BeInterhubDocumentReference`) is decoupled from the document payload. Every element of that envelope is specified in [Envelope & Metadata](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), and the two phases below are specified as transactions in [Transactions](transactions.html):
+Belgian Interhub document sharing adopts **`IHE.MHD.Comprehensive.DocumentReference` with Contained Resources** for discovery metadata (`ITI-67`).
 
-```mermaid
-flowchart LR
-    Client["Client / EHR"]
-    
-    subgraph Discovery["<b>1. Discovery Phase (MHD ITI-67)</b>"]
-        Search["GET /DocumentReference?patient=..."]
-        DocRef["<b>BeInterhubDocumentReference</b><br/>• Category: CD-TRANSACTION<br/>• Type: LOINC<br/>• Patient SSIN & Access Rules<br/>• HomeCommunityId<br/>• Payload URL Endpoint"]
-        Search --> DocRef
-    end
-
-    subgraph Retrieval["<b>2. Retrieval Phase (MHD ITI-68)</b>"]
-        GetDoc["GET /Bundle/{id}"]
-        DocBundle["<b>BeInterhubDocumentBundle</b><br/>• Type: #document<br/>• Root Composition<br/>• Clinical Resources<br/>• XHTML Narrative"]
-        GetDoc --> DocBundle
-    end
-
-    Client -->|"Query Metadata"| Discovery
-    Client -->|"Fetch Full Payload"| Retrieval
+```
+Federated Discovery (MHD ITI-67) ──► Returns DocumentReference
+├── Contained: BePatient (Demographics snapshot)
+├── Contained: BeOrganization (Answering Hub)
+├── Contained: BeOrganization (Hospital / Laboratory)
+├── Contained: BePractitioner (Authoring Physician)
+└── content.attachment.url ──► Retrieve Payload (ITI-68)
 ```
 
-* **Lightweight Querying**: Searching `DocumentReference` across multiple federated hubs returns small, highly indexable metadata records containing patient SSIN, CD-TRANSACTION category, LOINC type, author, date, and access rules.
-* **On-Demand Retrieval**: The consumer fetches the full document payload (`Bundle` type = `document`) only when the clinician asks to see it, which keeps bandwidth and hub load proportional to what is actually read.
+### Architectural Benefits:
+1. **Solving the Multi-Author Barrier**: Captures the answering regional hub, originating healthcare institution, and authoring practitioner in one entry, preserving the legacy KMEHR retrieval key without being blocked by federal `1..1` constraints.
+2. **Zero Secondary Network Queries**: Integrators rendering search lists receive all necessary display names, NIHDI numbers, and CBE identifiers directly inside the search response bundle, eliminating the N+1 dereferencing problem across federated regional gateways.
+3. **Point-in-Time Demographic Integrity**: Captures patient demographics as an immutable snapshot at publication time (`context.sourcePatientInfo`), separating historical record states from live MPI queries.
+4. **Cross-Border EHDS & IHE Compatibility**: Conforms natively to European cross-border profiling while respecting Belgian national identity constraints.
+
+For a detailed comparative analysis of MHD Minimal vs Comprehensive and Contained vs UnContained profiles, see [IHE MHD Alignment](ihe-mhd-alignment.html).
 
 ---
 
@@ -89,4 +83,4 @@ flowchart LR
 
 * **Previous:** [Architecture & Federation Model](architecture.html) — the network these decisions apply to.
 * **Next:** [Envelope & Metadata](envelope-and-metadata.html) — the discovery envelope this page justifies, specified element by element.
-* **Related:** [Transactions §3.3](transactions.html#33-payload-structure-strictly-fhir-bundles-of-type-document) for the normative bundle constraints, [Laboratory Reports](lab-report-sharing.html) and [Telemonitoring](mapping-telemonitoring-to-hub.html) for what a mandated document bundle actually looks like.
+* **Related:** [IHE MHD Alignment](ihe-mhd-alignment.html) for deep-dive technical comparisons; [Transactions §3.3](transactions.html#33-payload-structure-strictly-fhir-bundles-of-type-document) for the normative bundle constraints; [Laboratory Reports](lab-report-sharing.html) and [Telemonitoring](mapping-telemonitoring-to-hub.html) for concrete payloads.
