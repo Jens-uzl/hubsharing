@@ -99,8 +99,10 @@ flowchart LR
     subgraph Align["<b>4. Migration & Alignment</b>"]
         direction TB
         M1["KMEHR to FHIR Mapping<br/><i>(legacy, inward)</i>"]
-        M2["EHDS Alignment<br/><i>(Europe, outward)</i>"]
-        M1 --- M2
+        M2["IHE MHD Alignment<br/><i>(profile choices & WG options)</i>"]
+        M3["Minimal vs. Comprehensive<br/><i>(technical comparison)</i>"]
+        M4["EHDS Alignment<br/><i>(Europe, outward)</i>"]
+        M1 --> M2 --> M3 --> M4
     end
 
     Ref["<b>5. Artifacts</b><br/>profiles, extensions,<br/>examples"]
@@ -143,6 +145,8 @@ Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transac
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
 | **[KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html)** | Field-by-field crosswalk between KMEHR XML, IHE XDS.b ebXML and FHIR MHD, plus the KMEHR encapsulation strategy for the transition period. | All KMEHR ↔ FHIR field and code-system mappings, referenced from every other page. |
+| **[IHE MHD Alignment](ihe-mhd-alignment.html)** | Comparison of MHD Minimal vs Comprehensive vs UnContained vs Contained profiles, N+1 rationale, resolution of federal `author 1..1` cap, and open working group topics. | All IHE MHD profile comparison debates, contained resource rationale, and unresolved working group discussion items. |
+| **[Minimal vs. Comprehensive](minimal-vs-comprehensive.html)** | Direct side-by-side element comparison table and use case suitability matrix between `BeInterhubMinimalDocumentReference` and `BeInterhubDocumentReference`. | Technical comparison between Minimal and Comprehensive Belgian DocumentReference profiles. |
 | **[EHDS Alignment](ehds-alignment.html)** | Alignment with European Health Data Space profiles and the MyHealth@EU cross-border exchange flow. | Belgian ↔ EU profile matrix · what Belgium adds beyond baseline EHDS · NCPeH translation. |
 
 ### 3.5 Reference
@@ -156,7 +160,8 @@ Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transac
 ## 4. Key Artifacts Overview
 
 * **Profiles**:
-  * `BeInterhubDocumentReference`: Metadata discovery envelope for search results (`getTransactionList`).
+  * `BeInterhubDocumentReference`: Metadata discovery envelope for search results (`getTransactionList`), deriving from `IHE.MHD.Comprehensive.DocumentReference` with contained references.
+  * `BeInterhubMinimalDocumentReference`: Lightweight metadata discovery envelope deriving from `IHE.MHD.Minimal.DocumentReference` for edge/mobile ingest.
   * `BeInterhubDocumentBundle`: Canonical FHIR Document Bundle (`type = #document`) for document retrieval (`getTransaction`).
   * `BeInterhubLabComposition`: Root Composition for Laboratory Reports.
   * `BeTelemonitoringComposition`: Root Composition for Telemonitoring and remote monitoring sessions.
@@ -173,8 +178,8 @@ Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transac
   * `BeInterhubDocumentConsumer`: Client requirements for EHRs, regional portals, and initiating eHealth hubs.
 
 * **National profiles this guide builds on** (not redefined here):
-  * [`BePatient`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-patient), [`BePractitioner`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitioner), [`BePractitionerRole`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitionerrole), [`BeOrganization`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-organization) and [`BeAddress`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-address) from **`hl7.fhir.be.core`** — every reference to a patient, practitioner or organisation in this guide targets one of these, never the plain HL7 base resource, so the national SSIN / NIHDI / CBE / EHP identifier slices and the `CD-HCPARTY` typing are always available.
+  * [`BePatient`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-patient), [`BePractitioner`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitioner), [`BePractitionerRole`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitionerrole), [`BeOrganization`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-organization) and [`BeAddress`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-address) from **`hl7.fhir.be.core`** — embedded as `#contained` resources inside the metadata envelope.
   * [`BeObservation`](https://www.ehealth.fgov.be/standards/fhir/core-clinical/StructureDefinition/be-observation) from **`hl7.fhir.be.core-clinical`**, used for every clinical measurement carried inside a document bundle.
-  * One deliberate divergence from the federal core is documented in [Envelope & Metadata §2.1](envelope-and-metadata.html#21-relationship-to-bedocumentreference-hl7fhirbecore): `BeDocumentReference` caps `author` at `1..1`, which cannot express the Belgian Hub author chain, so `BeInterhubDocumentReference` profiles the base `DocumentReference` instead and a relaxation to `author 1..*` is requested against `hl7.fhir.be.core`.
+  * Derivation from `IHE.MHD.Comprehensive.DocumentReference` enables `author 1..*` with contained references while maintaining full national identity semantics (see [IHE MHD Alignment](ihe-mhd-alignment.html)).
 
 The full, machine-readable index of every profile, extension, value set and example is on the [Artifacts](artifacts.html) page. To start reading the specification itself, continue with **[Architecture & Federation Model](architecture.html)**.
