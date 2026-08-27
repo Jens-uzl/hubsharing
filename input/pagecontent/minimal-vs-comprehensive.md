@@ -47,7 +47,7 @@ The **IHE Mobile access to Health Documents (MHD)** profile family offers two ma
 | **`context.practiceSetting`** | `0..1 MS` (Optional) | **`1..1 MS` (Mandatory SNOMED CT)** | Mandatory clinical specialty / practice setting in Comprehensive. |
 | **`securityLabel`** | `0..* MS` (Optional) | **`1..* MS` (Mandatory `V3-Confidentiality`)** | Confidentiality level (`N`, `R`, `V`) is mandatory in Comprehensive. |
 | **`content.attachment.contentType`**| `1..1 MS` | `1..1 MS` | `application/fhir+json` (or `application/pdf`). |
-| **`content.attachment.url`** | `1..1 MS` | `1..1 MS` | Direct RESTful retrieve URL for ITI-68. |
+| **`content.attachment.url`** | `1..1 MS` | `1..1 MS` | Direct retrieve URL (resolved by `$retrieve-document` or downstream ITI-68). |
 | **`content.attachment.creation`** | `0..1 MS` (Optional) | **`1..1 MS` (Mandatory UTC Instant)** | Mandatory creation timestamp in Comprehensive. |
 | **`content.attachment.language`** | `0..1 MS` (Optional) | **`1..1 MS` (Mandatory BCP-47)** | Mandatory language code (`nl-BE`, `fr-BE`, `de-BE`, `en`). |
 | **`content.attachment.data`** | **`0..0` (Prohibited)** | **`0..0` (Prohibited)** | Inline Base64 payload forbidden; retrieved via URL. |
@@ -65,9 +65,9 @@ flowchart TD
     subgraph Minimal_Pattern["<b>Minimal Profile (External Reference Pattern)</b>"]
         direction TB
         M_DocRef["DocumentReference"]
-        M_DocRef -->|"author (URL)"| M_ExtPract["https://hub.cozo.be/fhir/Practitioner/10007999<br/><i>(Requires HTTP GET)</i>"]
-        M_DocRef -->|"custodian (URL)"| M_ExtOrg["https://hub.cozo.be/fhir/Organization/71000012<br/><i>(Requires HTTP GET)</i>"]
-        M_DocRef -->|"subject (URL)"| M_ExtPat["https://hub.cozo.be/fhir/Patient/79080412345<br/><i>(Requires HTTP GET)</i>"]
+        M_DocRef -->|"author (URL)"| M_ExtPract["https://hub.cozo.be/fhir/Practitioner/10007999<br/><i>(Requires secondary HTTP query)</i>"]
+        M_DocRef -->|"custodian (URL)"| M_ExtOrg["https://hub.cozo.be/fhir/Organization/71000012<br/><i>(Requires secondary HTTP query)</i>"]
+        M_DocRef -->|"subject (URL)"| M_ExtPat["https://hub.cozo.be/fhir/Patient/79080412345<br/><i>(Requires secondary HTTP query)</i>"]
     end
 
     subgraph Comp_Pattern["<b>Comprehensive Profile (Contained Resource Pattern)</b>"]
@@ -91,7 +91,7 @@ flowchart TD
 
 ### 3.2 The N+1 Network Query Problem
 In a federated network of independent regional hubs:
-* With **Minimal (External References)**: Displaying a list of 50 search results requires the client to execute up to **150+ secondary HTTP queries** across regional gateways to retrieve physician names, institution identifiers, and demographic snapshots.
+* With **Minimal (External References)**: Assembling and displaying a list of 50 search results requires executing up to **150+ secondary HTTP queries** across regional gateways to retrieve physician names, institution identifiers, and demographic snapshots.
 * With **Comprehensive (Contained References)**: All display names, NIHDI numbers, and CBE enterprise numbers are delivered **inline** inside the searchset Bundle. The search table renders instantly with **zero secondary network round-trips**.
 
 ---

@@ -94,7 +94,7 @@ sequenceDiagram
 
     Caregiver->>FNCP: Query Belgian Patient Records (SSIN / EU ID)
     FNCP->>BENCP: Cross-Border Query (IHE XCA / MHD ITI-67 Find DocumentReferences)
-    BENCP->>Hubs: Federated ITI-67 (Patient SSIN, Category)
+    BENCP->>Hubs: Federated POST /DocumentReference/_search (body: patient.identifier=...)
     Hubs-->>BENCP: Return BeInterhubDocumentReference[] entries
     Note over BENCP: • Acts as the initiating node: performs access control<br/>• Applies BeExtPatientAccess rules (filters out withheld documents)<br/>• Transforms to EHDS DocumentReferenceEu
     BENCP-->>FNCP: Return DocumentReferenceEu[]
@@ -102,19 +102,92 @@ sequenceDiagram
     
     Caregiver->>FNCP: Retrieve Selected Document Payload (ITI-68)
     FNCP->>BENCP: Cross-Border Retrieve (MHD ITI-68 / IHE XCA)
-    BENCP->>Hubs: Dispatch Retrieve to authoritative Hub (HomeCommunityId)
-    Hubs->>Sources: Fetch BeInterhubDocumentBundle
+    BENCP->>Hubs: POST /DocumentReference/$retrieve-document (body: documentReference)
+    Hubs->>Sources: Fetch BeInterhubDocumentBundle (internal)
     Sources-->>Hubs: Return Document Bundle (type = #document)
     Hubs-->>BENCP: Return BeInterhubDocumentBundle
-    BENCP-->>FNCP: Return Document Bundle
+    BENCP-->>FNCP: Return Document Bundle (type = #document)
     FNCP-->>Caregiver: Render Document in Clinical Workstation
 ```
 
-1. The Belgian NCPeH receives the cross-border query and, acting as the **initiating hub** inside the Belgian network, performs its access control (consent and cross-border eligibility) before running an Interhub `getTransactionList` (MHD ITI-67) search across Belgian eHealth hubs. The responding Belgian hubs trust the NCPeH and do not repeat those checks.
+1. The Belgian NCPeH receives the cross-border query and, acting as the **initiating hub** inside the Belgian network, performs its access control (consent and cross-border eligibility) before running an Interhub discovery search (`POST /DocumentReference/_search`) across Belgian eHealth hubs. The responding Belgian hubs trust the NCPeH and do not repeat those checks.
 2. The regional hubs return `BeInterhubDocumentReference` entries.
 3. The Belgian NCPeH filters out documents marked `PatientAccess = never` or sealed, strips internal Belgian-only routing extensions if necessary, and serves the compliant `BeInterhubDocumentBundle` payload to the foreign healthcare provider.
 
-In Interhub terms the NCPeH is simply another **initiating hub**: it performs the access control and the Belgian hubs answer on trust, exactly as specified in [Security & Authentication §1.1](security.html#11-trust-model-access-control-is-the-initiating-hubs-responsibility). The two calls it makes are the ordinary ITI-67 and ITI-68 transactions of [Transactions](transactions.html), and the access flags it filters on are specified in [Envelope & Metadata §3.2](envelope-and-metadata.html#32-belgian-patient-access-metadata-beextpatientaccess).
+In Interhub terms the NCPeH is simply another **initiating hub**: it performs the access control and the Belgian hubs answer on trust, exactly as specified in [Security & Authentication §1.1](security.html#11-trust-model-access-control-is-the-initiating-hubs-responsibility). The two calls it makes are the ordinary `POST _search` and `POST $retrieve-document` transactions of [Transactions](transactions.html), and the access flags it filters on are specified in [Envelope & Metadata §3.2](envelope-and-metadata.html#32-belgian-patient-access-metadata-beextpatientaccess).
+
+---
+
+## 5. Architectural Alignment: Belgian POST-Everywhere API & IHE MHD / XDS Gateway Adaptation
+
+### 5.1 The Privacy Imperative: Zero-GET at the National Boundary
+In HTTP GET interactions, request paths and query parameters are logged in plaintext across intermediate web servers, reverse proxies, API gateways, load balancers, SIEM systems, browser histories, and enterprise monitoring logs (`access.log`). Placing sensitive patient identifiers (such as Belgian SSINs) or clinical search criteria in GET query strings or URLs creates significant data leakage risks.
+
+To enforce strict medical confidentiality and GDPR data minimization, Belgian Interhub mandates **HTTP POST everywhere** across all consumer-facing and hub-to-hub boundaries.
+
+### 5.2 Three-Tier Conformance Architecture
+
+To ensure seamless interoperability with European MyHealth@EU endpoints and existing IHE MHD / XDS.b document sharing infrastructure while maintaining a strict POST-only national boundary, the architecture is structured into three conformance tiers:
+
+```
+                National Belgian API
+                         │
+                         │ FHIR R4
+                         │ POST only
+                         ▼
+        ┌─────────────────────────────────┐
+        │  Belgian Document Access Gateway │
+        │         & Protocol Adapter      │
+        └────────────────┬────────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+       IHE MHD        IHE XDS.b    Native FHIR
+    (ITI-67/ITI-68) (ITI-18/ITI-43)  Repository
+```
+
+#### 1. Belgian Consumer API (National Boundary)
+Initiating hubs and Belgian consumers **SHALL execute all transactions using HTTP POST**:
+* **Document Discovery**: `POST [base]/DocumentReference/_search` (request parameters in `application/x-www-form-urlencoded` body).
+* **Document Retrieval**: `POST [base]/DocumentReference/$retrieve-document` (request parameters in `application/fhir+json` `Parameters` body).
+
+Consumers do not need to know whether the backend repository uses IHE MHD, XDS.b, or local storage.
+
+#### 2. Belgian Gateway / Façade Translation
+The gateway acts as a stable national façade, translating the Belgian POST operations onto the appropriate underlying document-sharing standard:
+
+```
+Belgian Transaction                   Downstream IHE MHD Transaction
+───────────────────                   ──────────────────────────────
+POST DocumentReference/_search  ───►  MHD ITI-67 Find DocumentReferences
+(form-urlencoded body)                (MHD ITI-67 explicitly permits POST search)
+
+POST DocumentReference/$retrieve-document ──► MHD ITI-68 Retrieve Document
+(Parameters body: documentReference)          (GET <DocumentReference.content.attachment.url>)
+```
+
+For an XDS.b repository backend, the gateway resolves the transactions to **ITI-18 (Registry Stored Query)** and **ITI-43 (Retrieve Document Set)**.
+
+#### 3. IHE Interoperability Boundary
+Whenever an endpoint directly claims conformance to an IHE profile (such as cross-border communication with European NCPeH nodes), it complies with the normative IHE specification at that boundary:
+* `POST $retrieve-document` is a **Belgian FHIR Operation**, while the downstream gateway call `GET <attachment.url>` is standard **IHE ITI-68**.
+* The gateway preserves HTTP status codes and error semantics across the translation boundary:
+
+| Belgian API Response | Downstream IHE Status | Condition / Meaning |
+| :--- | :--- | :--- |
+| **`200 OK`** | `200 OK` | Document successfully retrieved. |
+| **`404 Not Found`** | `404 Not Found` | Document not found. |
+| **`410 Gone`** | `410 Gone` | Document withdrawn / deprecated by source repository. |
+| **`406 Not Acceptable`** | `406 Not Acceptable` | Requested MIME type in `Accept` not supported. |
+| **`403 Forbidden`** | `403 Forbidden` | Access forbidden by downstream security policy. |
+| **`502 Bad Gateway`** | `502 Bad Gateway` / Timeout | Downstream repository unreachable. |
+
+### 5.3 Security Advantage of Gateway-Mediated Retrieval
+By routing document retrieval through `POST /DocumentReference/$retrieve-document`, the gateway eliminates the need to expose raw internal repository URLs directly to consumers. The gateway validates authorization, resolves the repository endpoint, audits the transaction, and fetches the document without turning the retrieval interface into an open Server-Side Request Forgery (SSRF) vector.
+
+> **Normative Standards Statement**:  
+> *The Belgian Document Access API defines a FHIR R4 POST-based interface. Implementations MAY use IHE MHD to fulfill these transactions. Where IHE MHD is used, the infrastructure SHALL map the Belgian transactions to the corresponding IHE transactions while maintaining the semantics and conformance requirements of those transactions.*
 
 ---
 

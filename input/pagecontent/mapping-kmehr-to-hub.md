@@ -70,7 +70,7 @@ This page maps *between* representations; it does not define the target. The FHI
 | `transaction/confidentiality/cd` | `confidentialityCode` | `securityLabel` | `N` (Normal), `R` (Restricted), `V` (Very Restricted) (`1..* MS`). |
 | `lnk/@MEDIATYPE` | `mimeType` | `content.attachment.contentType` | `application/fhir+json` (`1..1 MS`). |
 | Schema format | `formatCode` | `content.format` | Format URI (`1..1 MS`). |
-| Internal retrieval key | Repository endpoint | `content.attachment.url` | Direct RESTful retrieve URL for ITI-68 (`1..1 MS`). |
+| Internal retrieval key | Repository endpoint | `content.attachment.url` | Direct RESTful retrieve URL for `$retrieve-document` / ITI-68 (`1..1 MS`). |
 | `transaction/date` + `time` | `creationTime` | `content.attachment.creation` | Creation instant normalized to UTC (`1..1 MS`). |
 
 ### 2.1 What Actually Identifies a Transaction in KMEHR

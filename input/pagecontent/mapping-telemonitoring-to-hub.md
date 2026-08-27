@@ -10,7 +10,7 @@
 
 Telemonitoring, or remote patient monitoring (TMP), is growing quickly in Belgium: chronic care programmes, post-discharge follow-up, ambulatory Holter monitoring in cardiology, diabetes care, oncology. The platforms behind them produce a steady stream of continuous and episodic sensor data, patient-reported outcome measures (PROMs) and automated diagnostic evaluations.
 
-None of that is clinically useful while it stays inside the monitoring platform. To make telemonitoring results part of the longitudinal patient record, readable by every treating physician across the Belgian federated hubs (CoZo, RSW, BHN, Zodap — see [Architecture §1](architecture.html#1-the-belgian-federated-health-ecosystem)), telemonitoring data is published as **self-contained FHIR Document Bundles (`Bundle.type = #document`)** categorized under `CD-TRANSACTION` code `telemonitoring`. The document-bundle paradigm is justified in [Design Rationale](resource-considerations.html#2-evaluation-of-candidate-carrier-paradigms) and constrained normatively in [Transactions §3.3](transactions.html#33-payload-structure-strictly-fhir-bundles-of-type-document).
+None of that is clinically useful while it stays inside the monitoring platform. To make telemonitoring results part of the longitudinal patient record, readable by every treating physician across the Belgian federated hubs (CoZo, RSW, BHN, Zodap — see [Architecture §1](architecture.html#1-the-belgian-federated-health-ecosystem)), telemonitoring data is shared via or published on hubs as **self-contained FHIR Document Bundles (`Bundle.type = #document`)** categorized under `CD-TRANSACTION` code `telemonitoring`. The document-bundle paradigm is justified in [Design Rationale](resource-considerations.html#2-evaluation-of-candidate-carrier-paradigms) and constrained normatively in [Transactions §3.3](transactions.html#33-payload-structure-strictly-fhir-bundles-of-type-document).
 
 ---
 
@@ -98,7 +98,7 @@ flowchart TB
 
 ## 4. Metadata Mapping for `getTransactionList` (MHD ITI-67)
 
-When published to the regional hub, the telemonitoring session is discoverable via `BeInterhubDocumentReference`. Only the telemonitoring-specific *values* are given here; the cardinality and meaning of each element are specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), and the search that returns it in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences):
+When shared via or published on the regional hub, the telemonitoring session is discoverable via `BeInterhubDocumentReference`. Only the telemonitoring-specific *values* are given here; the cardinality and meaning of each element are specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), and the search that returns it in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences):
 
 * `category`: `https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-transaction#telemonitoring`
 * `type`: `http://loinc.org#18754-2` ("Ambulatory cardiac rhythm monitor (Holter) study")

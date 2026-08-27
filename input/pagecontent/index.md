@@ -4,9 +4,13 @@
 
 For two decades, patient records have moved between Belgian care organisations — hospitals, independent laboratories, pharmacies, practice organisations, care homes and every other kind of hub source — and the national registers as **KMEHR** (Kind Messages for Electronic Healthcare Records) XML, carried by SOAP-based Interhub Web Services. KMEHR has served the country well. It gave Belgium a working federated exchange long before most member states had one, and the model it established still underpins the **Hub and Metahub** infrastructure that connects the regional eHealth hubs — **CoZo** (Collaboratief Zorgplatform), **RSW** (Réseau Santé Wallon), **BHN** (Brussels Health Network) and **Zodap** (Zorg Data Platform) — to the healthcare repositories behind them.
 
-The argument for moving that infrastructure onto **HL7® FHIR® Release 4**, and specifically onto the **IHE MHD (Mobile access to Health Documents)** profile family, is now a practical one rather than an aspirational one. Integrators arriving today expect REST and JSON. Cloud-hosted EHRs, mobile applications and patient-facing portals are built against them, and the **European Health Data Space (EHDS)** assumes them. A hub network that stays on SOAP keeps its data but loses the developers who would otherwise build on it.
+The argument for moving that infrastructure onto **HL7® FHIR® Release 4**, and specifically onto the **IHE MHD (Mobile access to Health Documents)** profile family, is now a practical one rather than an aspirational one. Integrators arriving today expect REST and JSON, and the **European Health Data Space (EHDS)** assumes them.
 
-This Implementation Guide (IG) sets out that migration as a normative **proposal and technical specification** for Belgian Interhub communications: a complete bridge from the established KMEHR services to RESTful FHIR MHD transactions, built to preserve backwards compatibility and semantic fidelity in both directions. Section 3 explains how the guide is organised and in which order to read it.
+This Implementation Guide (IG) sets out that modernization as a normative **proposal and technical specification** strictly for **Belgian Interhub communications**: the federated, Hub-to-Hub communication layer connecting regional eHealth hubs to one another and to cross-border gateways. 
+
+> **Important Scope Boundary**: **Interhub communication is strictly for Hub-to-Hub connections.** Clinical applications (EHRs, LIS, regional or patient portals, telemonitoring platforms) connect to their respective local Hub via **Intrahub endpoints** using Intrahub protocols (such as KMEHR or internal standards). Everything outside Hub-to-Hub communication is **out of scope** for this Implementation Guide.
+
+Section 3 explains how the guide is organised and in which order to read it.
 
 ---
 
@@ -14,36 +18,44 @@ This Implementation Guide (IG) sets out that migration as a normative **proposal
 
 ```mermaid
 flowchart TD
-    subgraph Clients["<b>Interhub Consumers & Initiators</b>"]
-        EHR["Hub Source EHR / LIS<br/>(hospital, lab, practice, …)"]
-        Portal["Regional / Patient Portal"]
-        Mobile["Telemonitoring / Mobile App"]
+    subgraph OutOfScope["<b>Local Clinical Domain (OUT OF SCOPE)</b>"]
+        direction TB
+        Apps["<b>Clinical Applications & Source Systems</b><br/>• Hospital EHR / LIS<br/>• Regional / Patient Portals<br/>• Telemonitoring Platforms / Apps"]
+        IntraEP["<b>Local Hub Intrahub Endpoint</b><br/>(KMEHR or internal protocols / standards)"]
+        Apps -->|"Intrahub communication<br/>(local protocols)"| IntraEP
     end
 
-    subgraph HubNetwork["<b>Belgian Federated Interhub Network</b>"]
+    subgraph InScope["<b>Belgian Federated Interhub Network (IN SCOPE)</b>"]
         direction TB
-        subgraph Discovery["<b>Discovery Layer (getTransactionList / ITI-67)</b>"]
-            DocRef["<b>BeInterhubDocumentReference</b><br/>• SSIN, NIHDI, CBE Identifiers<br/>• CD-TRANSACTION & LOINC<br/>• BeExtPatientAccess & HomeCommunityId"]
+        InitHub["<b>Initiating eHealth Hub</b><br/>• Local Access Control & Consent Check<br/>• Metahub Patient-Link Resolution"]
+
+        subgraph RespondingHub["<b>Responding eHealth Hub(s)</b>"]
+            direction TB
+            subgraph Discovery["<b>Discovery Layer (getTransactionList / ITI-67)</b>"]
+                DocRef["<b>BeInterhubDocumentReference</b><br/>• SSIN, NIHDI, CBE Identifiers<br/>• CD-TRANSACTION & LOINC<br/>• BeExtPatientAccess & HomeCommunityId"]
+            end
+
+            subgraph Payload["<b>Payload Layer (getTransaction / ITI-68)</b>"]
+                Bundle["<b>BeInterhubDocumentBundle (Bundle.type = #document)</b><br/>• Self-Contained Immutable Snapshot<br/>• Mandatory XHTML Narrative"]
+                Lab["<b>Laboratory Reports</b><br/>(BeInterhubLabComposition)"]
+                TM["<b>Telemonitoring Sessions</b><br/>(BeTelemonitoringComposition)"]
+                Bundle --> Lab
+                Bundle --> TM
+            end
+
+            Discovery -.->|"content.attachment.url"| Payload
         end
 
-        subgraph Payload["<b>Payload Layer (getTransaction / ITI-68)</b>"]
-            Bundle["<b>BeInterhubDocumentBundle (Bundle.type = #document)</b><br/>• Self-Contained Immutable Snapshot<br/>• Mandatory XHTML Narrative"]
-            Lab["<b>Laboratory Reports</b><br/>(BeInterhubLabComposition)"]
-            TM["<b>Telemonitoring Sessions</b><br/>(BeTelemonitoringComposition)"]
-            Bundle --> Lab
-            Bundle --> TM
-        end
-
-        Discovery -.->|"content.attachment.url"| Payload
+        InitHub -->|"1. Interhub Metadata Discovery (ITI-67)"| Discovery
+        InitHub -->|"2. Interhub Payload Retrieval (ITI-68)"| Payload
     end
 
     subgraph CrossBorder["<b>European Interoperability</b>"]
-        EHDS["<b>EHDS / MyHealth@EU</b><br/>• DocumentReferenceEu<br/>• Composition-eu-lab / HDR"]
+        EHDS["<b>EHDS / MyHealth@EU</b><br/>(via Belgian NCPeH as initiating/responding Hub)<br/>• DocumentReferenceEu<br/>• Composition-eu-lab / HDR"]
     end
 
-    Clients -->|"1. Discover Metadata"| Discovery
-    Clients -->|"2. Retrieve Payload"| Payload
-    HubNetwork <===>|"Cross-Border Exchange"| CrossBorder
+    IntraEP -->|"Initiates cross-hub federation"| InitHub
+    InScope <===>|"Interhub Cross-Border Exchange"| CrossBorder
 ```
 
 1. **Document-Centric Sharing** *(rationale: [Design Rationale](resource-considerations.html))*:
@@ -53,8 +65,9 @@ flowchart TD
    Document discovery across the federated hubs is powered by the **`BeInterhubDocumentReference`** profile. This metadata envelope provides the modern equivalent of the KMEHR `TransactionSummaryType` and ebXML RIM `XDSDocumentEntry`, carrying essential discovery parameters, Belgian national identifiers (SSIN/INSS, NIHDI, CBE), Belgian patient access rules, and endpoint URIs for retrieving the document payload.
 
 3. **Interhub Transactions & Operations** *(specified in [Transactions](transactions.html); secured as described in [Security & Authentication](security.html))*:
-   * **`getTransactionList`** is mapped directly to **IHE MHD ITI-67 (`Find DocumentReferences`)**, allowing consumers to query for available document metadata summaries matching patient identity and filter criteria.
-   * **`getTransaction`** is mapped directly to **IHE MHD ITI-68 (`Retrieve Document`)** and the FHIR `$document` operation, returning the complete immutable FHIR Document Bundle (`type = #document`) or binary/encapsulated document.
+   * **`getTransactionList`** is mapped to **IHE MHD ITI-67 (`Find DocumentReferences`)** via `POST [base]/DocumentReference/_search`, allowing an initiating hub to query for available document metadata summaries matching patient identity and filter criteria across partner hubs using POST request bodies to prevent patient identifier leakage in network access logs.
+   * **`getTransaction`** is mapped to the Belgian FHIR **`$retrieve-document`** operation (`POST [base]/DocumentReference/$retrieve-document`), returning the complete immutable FHIR Document Bundle (`type = #document`) or binary/encapsulated document to the initiating hub, with gateway resolution to IHE MHD ITI-68.
+   * **Strict Hub-to-Hub Boundary**: Only hubs execute Interhub transactions. Clinical clients connect to their local Hub via Intrahub endpoints (out of scope), and the local Hub initiates Interhub requests as required.
 
 4. **EHDS (European Health Data Space) Alignment** *(analysed in [EHDS Alignment](ehds-alignment.html))*:
    The Belgian Interhub profiles are built to align with EHDS cross-border specifications: **EU Laboratory Results**, **EU Hospital Discharge Reports**, **EU Patient Summaries** and **EU Imaging**. Belgium carries more than the European baseline asks for — routing across several federated hubs, national consent registers, document-level patient access metadata — but never less, and every shared structure stays readable at both ends.
@@ -127,7 +140,7 @@ flowchart LR
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
 | **[Envelope & Metadata](envelope-and-metadata.html)** | `BeInterhubDocumentReference` element by element: national identifiers, Belgian extensions, MIME and language rules, UTC normalization. | **Every metadata field and extension in the guide.** Other pages give values; this page gives definitions. |
-| **[Transactions](transactions.html)** | `getTransactionList` (MHD ITI-67) and `getTransaction` (MHD ITI-68): URLs, search parameters, response bundles, partial-failure handling, error crosswalk. | The wire-level contract · `OperationOutcome` on downstream failure · HTTP status codes. |
+| **[Transactions](transactions.html)** | `getTransactionList` (`POST _search`) and `getTransaction` (`POST $retrieve-document`): wire contracts, search parameters, response bundles, partial-failure handling, error crosswalk. | The wire-level contract · `OperationOutcome` on downstream failure · HTTP status codes. |
 | **[Security & Authentication](security.html)** | The Interhub trust model (the initiating hub owns access control), the three hub authentication routes, mTLS, DPoP (RFC 9449) / RFC 9421 tamper-proofing, and IHE BALP auditing. | **All security topics.** [Architecture §5](architecture.html#5-trust-model-security-architecture--connection-routes-proposal) is a two-paragraph summary of this page; this page takes precedence. |
 | **[End-to-End Encryption](end-to-end-encryption.html)** | *Discussion paper.* KMEHR ETEE versus FHIR E2EE, JWE and CMS payload encryption, zero-knowledge hubs, and the recommended tiered hybrid strategy. | The open question of payload encryption. **Non-normative** — it does not change what [Security & Authentication](security.html) mandates. |
 
@@ -175,7 +188,7 @@ Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transac
   * `TelemonitoringId`, `Carepath`, `PrescriberApplication`, `SourceTelemonitoringReport`: Telemonitoring metadata extensions.
 * **Capability Statements**:
   * `BeInterhubDocumentResponder`: Server requirements for eHealth Hubs and Document Registries/Repositories.
-  * `BeInterhubDocumentConsumer`: Client requirements for EHRs, regional portals, and initiating eHealth hubs.
+  * `BeInterhubDocumentConsumer`: Client requirements for initiating eHealth hubs and cross-border gateways in Interhub federated communication.
 
 * **National profiles this guide builds on** (not redefined here):
   * [`BePatient`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-patient), [`BePractitioner`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitioner), [`BePractitionerRole`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-practitionerrole), [`BeOrganization`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-organization) and [`BeAddress`](https://www.ehealth.fgov.be/standards/fhir/core/StructureDefinition/be-address) from **`hl7.fhir.be.core`** — embedded as `#contained` resources inside the metadata envelope.

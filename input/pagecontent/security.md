@@ -32,24 +32,29 @@ The Metahub and the federation of hubs referred to here are described in [Archit
 
 ```mermaid
 flowchart LR
-    User["<b>End User / Local System</b><br/>(Practitioner, EHR, Portal)"]
-    subgraph Init["<b>INITIATING HUB</b>"]
+    subgraph OutOfScope["<b>Local Clinical Domain (OUT OF SCOPE)</b>"]
+        User["<b>End User / Clinical App</b><br/>(Practitioner, EHR, Portal)"]
+    end
+
+    subgraph Init["<b>INITIATING eHEALTH HUB</b>"]
         AC["<b>Access Control (local responsibility)</b><br/>• e.g. Metahub query: does an IC exist?<br/>• e.g. local database: therapeutic link,<br/>&nbsp;&nbsp;patient administration, local rules<br/>• Decision recorded in local audit trail"]
     end
-    subgraph Resp["<b>RESPONDING HUB</b>"]
+
+    subgraph Resp["<b>RESPONDING eHEALTH HUB</b>"]
         Tech["<b>Technical validation only</b><br/>• mTLS + calling hub authentication<br/>• Replay / tamper-proofing (DPoP or RFC 9421)<br/>• Query syntax<br/>• AuditEvent logging"]
     end
 
-    User --> AC
-    AC -->|"Interhub request<br/>(only if the local check passed)"| Tech
+    User -->|"Intrahub Request<br/>(local protocol)"| AC
+    AC -->|"Interhub request (IN SCOPE)<br/>(only if local check passed)"| Tech
     Tech -->|"Trusted response"| AC
+    AC -->|"Intrahub Response"| User
 ```
 
 ---
 
 ## 2. The Three Authentication & Connection Routes (Proposal)
 
-Client environments differ widely: cloud-native EHRs, regional hub nodes, mobile applications and legacy hub source middleware all need a way in. The Belgian Interhub specification therefore evaluates **three distinct authentication routes**. All three answer one question, *which hub is calling, and is the request untampered?*, and none of them carries an access decision about the patient's records.
+Hub operating environments differ across the federated network. The Belgian Interhub specification therefore evaluates **three distinct authentication routes** for Hub-to-Hub communication. All three answer one question, *which hub is calling, and is the request untampered?*, and none of them carries an access decision about the patient's records.
 
 > **Important Architectural Note**: Presenting three connection models is **an architectural proposal**. For the final normative standard, the Belgian healthcare ecosystem **must pick one of these three methods** as the unified national authentication framework.
 
@@ -177,25 +182,25 @@ grant_type=client_credentials
 
 ### 2.3 Route 3: Derived System Based on STS (SAML 2.0 to OAuth 2.0 Bridge)
 
-A great many Belgian hub source systems — hospital EHRs, laboratory information systems, pharmacy and practice software — together with their connector middleware, already integrate with the **eHealth Security Token Service (STS)** over SOAP WS-Trust, presenting SAML 2.0 tokens signed with physical eHealth X.509 keystores. Rewriting that authentication stack is neither quick nor cheap.
+Many Belgian regional hubs and hub connector nodes already integrate with the **eHealth Security Token Service (STS)** over SOAP WS-Trust, presenting SAML 2.0 tokens signed with eHealth X.509 enterprise keystores. Rewriting that authentication stack is neither quick nor cheap.
 
-An **STS Token Exchange Gateway** lets those systems reach RESTful Interhub endpoints without the rewrite:
+An **STS Token Exchange Gateway** enables an initiating hub running legacy STS-based infrastructure to bridge to RESTful OAuth 2.0 Bearer JWTs without an immediate architectural rewrite:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Src as Legacy Hub Source System (Hospital / Lab / Practice)
+    participant InitHub as Initiating eHealth Hub (Connector / Bridge)
     participant STS as eHealth Platform STS (WS-Trust)
     participant Bridge as Interhub Token Exchange Service (RFC 8693)
-    participant Responder as Belgian Interhub FHIR Responder
+    participant Responder as Responding Belgian Interhub FHIR Responder
 
-    Src->>STS: 1. Request SAML 2.0 Token (SOAP WS-Trust with Keystore)
-    STS-->>Src: 2. Return Signed SAML 2.0 Assertion
-    Src->>Bridge: 3. POST /oauth/token<br/>(grant_type=token-exchange, subject_token=SAML2, audience=hub)
+    InitHub->>STS: 1. Request SAML 2.0 Token (SOAP WS-Trust with Keystore)
+    STS-->>InitHub: 2. Return Signed SAML 2.0 Assertion
+    InitHub->>Bridge: 3. POST /oauth/token<br/>(grant_type=token-exchange, subject_token=SAML2, audience=hub)
     Note over Bridge: • Validates SAML signature against eHealth Trust Chain<br/>• Extracts NIHDI, CBE, SSIN, and Role assertions (for audit)<br/>• Verifies validity window
-    Bridge-->>Src: 4. Return short-lived OAuth 2.0 JWT Access Token
-    Src->>Responder: 5. GET /fhir/DocumentReference (Authorization: Bearer JWT)
-    Responder-->>Src: 6. HTTP 200 OK (FHIR Response)
+    Bridge-->>InitHub: 4. Return short-lived OAuth 2.0 JWT Access Token
+    InitHub->>Responder: 5. Interhub POST /DocumentReference/_search (Authorization: Bearer JWT)
+    Responder-->>InitHub: 6. HTTP 200 OK (FHIR Response)
 ```
 
 #### RFC 8693 Token Exchange Request Example:
@@ -205,10 +210,10 @@ Host: auth-gateway.ehealth.fgov.be
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=urn:ietf:params:oauth:grant-type:token-exchange
-&client_id=hubsource-connector-uzl
+&client_id=initiating-hub-cozo
 &subject_token=PHNhbWwycDpBc3NlcnRpb24geG1sbnM6c2FtbDJwPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXNzZXJ0aW9uIi...
 &subject_token_type=urn:ietf:params:oauth:token-type:saml2
-&audience=https://hub.cozo.be/fhir
+&audience=https://hub.bhn.be/fhir
 ```
 
 #### Response:
@@ -259,21 +264,21 @@ A bare bearer token (`Authorization: Bearer <token>`) offers neither property. I
 ```mermaid
 flowchart TD
     subgraph Request["<b>Initiating Client / Hub Request</b>"]
-        URI["<b>HTTP Target URI & Query</b><br/>GET /DocumentReference?patient.identifier=ssin|79080412345&category=labresult"]
+        URI["<b>HTTP Target Endpoint</b><br/>POST /DocumentReference/_search<br/>(Body: patient.identifier=ssin|...&category=...)"]
         Key["<b>Sender Private Key</b><br/>(DPoP Key or eHealth Enterprise Key)"]
     end
 
     subgraph SecurityHeaders["<b>Cryptographic Proof Headers</b>"]
         direction TB
-        DPoP["<b>Option A: DPoP Proof (RFC 9449)</b><br/>• htu: https://hub.cozo.be/fhir/DocumentReference<br/>• htm: GET<br/>• jti: unique-nonce-uuid<br/>• iat: current-timestamp"]
-        HTTPsig["<b>Option B: HTTP Message Signature (RFC 9421)</b><br/>• @method: GET<br/>• @target-uri: full query string<br/>• Signature-Input: keyid, created, nonce"]
+        DPoP["<b>Option A: DPoP Proof (RFC 9449)</b><br/>• htu: https://hub.cozo.be/fhir/DocumentReference/_search<br/>• htm: POST<br/>• jti: unique-nonce-uuid<br/>• iat: current-timestamp"]
+        HTTPsig["<b>Option B: HTTP Message Signature (RFC 9421)</b><br/>• @method: POST<br/>• @target-uri: https://hub.cozo.be/fhir/DocumentReference/_search<br/>• content-digest: sha-256=:...:<br/>• Signature-Input: keyid, created, nonce"]
     end
 
     subgraph TargetHub["<b>Responding eHealth Hub (Verification)</b>"]
         direction TB
         V1["1. Validate Bearer Token & Issuer Signature"]
         V2["2. Verify Proof Signature against Sender Key"]
-        V3["3. Match Target URI / Query against Signed Proof"]
+        V3["3. Match Target URI / Query & Content Digest against Signed Proof"]
         V4["4. Check Freshness Window (30-60s) & Nonce Cache"]
     end
 
@@ -295,14 +300,17 @@ flowchart TD
    * Validates that the access token is thumbprint-bound (`cnf.jkt`) to the public key in the DPoP header.
    * Confirms that `htu` and `htm` match the incoming request.
    * Verifies that the `iat` timestamp is within the acceptable freshness window (**30 to 60 seconds**) and checks `jti` against a replay cache.
-   * Rejects any request where query parameters or URIs were manipulated in transit.
+   * Rejects any request where query parameters, URIs, or bodies were manipulated in transit.
 
 #### Sample DPoP HTTP Request:
 ```http
-GET /fhir/DocumentReference?patient.identifier=https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin|79080412345&category=labresult HTTP/1.1
+POST /fhir/DocumentReference/_search HTTP/1.1
 Host: hub.cozo.be
+Content-Type: application/x-www-form-urlencoded
 Authorization: DPoP eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCIsImN0eSI6IkpXVCJ9...
 DPoP: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiZ...
+
+patient.identifier=https%3A%2F%2Fwww.ehealth.fgov.be%2Fstandards%2Ffhir%2Fcore%2FNamingSystem%2Fssin%7C79080412345&category=https%3A%2F%2Fwww.ehealth.fgov.be%2Fstandards%2Ffhir%2Fcore%2FCodeSystem%2Fcd-transaction%7Clabresult
 ```
 
 #### Decoded DPoP Proof Header (`DPoP` JWT):
@@ -320,8 +328,8 @@ DPoP: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2Ij
   },
   "payload": {
     "jti": "b59a86a6-9907-4279-8b6a-939e4a3b1a8d",
-    "htm": "GET",
-    "htu": "https://hub.cozo.be/fhir/DocumentReference",
+    "htm": "POST",
+    "htu": "https://hub.cozo.be/fhir/DocumentReference/_search",
     "iat": 1773763200,
     "nonce": "k3L90xPz-1m9"
   }
@@ -335,17 +343,21 @@ DPoP: eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2Ij
 Belgian regulation may yet require that the audit trail be signed with the institution's official **eHealth Enterprise Certificate (X.509)** rather than an ephemeral OAuth client key. **RFC 9421 (HTTP Message Signatures)** covers that case, signing the HTTP message itself.
 
 #### Mechanics & Workflow:
-1. The calling system signs the HTTP request components (`@method`, `@target-uri`, `authorization`, and optional `content-digest` for POST/PUT payloads) using its official Belgian eHealth private key.
-2. The request carries standard `Signature-Input` and `Signature` headers.
-3. The responding hub validates the signature against the eHealth certificate trust chain, verifying that no query parameters (including `patient.identifier` and `category`) were altered.
+1. The calling system signs the HTTP request components (`@method`, `@target-uri`, `content-type`, `content-digest`, and `authorization`) using its official Belgian eHealth private key.
+2. The request carries standard `Signature-Input`, `Signature`, and `Content-Digest` headers.
+3. The responding hub validates the signature against the eHealth certificate trust chain, verifying that no payload parameters (including `patient.identifier` and `category`) were altered.
 
 #### Sample RFC 9421 HTTP Request:
 ```http
-GET /fhir/DocumentReference?patient.identifier=https://www.ehealth.fgov.be/standards/fhir/core/NamingSystem/ssin|79080412345&category=labresult HTTP/1.1
+POST /fhir/DocumentReference/_search HTTP/1.1
 Host: hub.cozo.be
+Content-Type: application/x-www-form-urlencoded
+Content-Digest: sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7k8BiMH0A=:
 Authorization: Bearer eyJhbGciOiJSUzI1Ni...
-Signature-Input: sig1=("@method" "@target-uri" "authorization");created=1773763200;keyid="ehealth:cbe:0419052173";nonce="8f2a9e3d";alg="rsa-v1_5-sha256"
+Signature-Input: sig1=("@method" "@target-uri" "content-type" "content-digest" "authorization");created=1773763200;keyid="ehealth:cbe:0419052173";nonce="8f2a9e3d";alg="rsa-v1_5-sha256"
 Signature: sig1=:MEUCIQDxZ8Y7j...kL9A1wP==:
+
+patient.identifier=https%3A%2F%2Fwww.ehealth.fgov.be%2Fstandards%2Ffhir%2Fcore%2FNamingSystem%2Fssin%7C79080412345&category=https%3A%2F%2Fwww.ehealth.fgov.be%2Fstandards%2Ffhir%2Fcore%2FCodeSystem%2Fcd-transaction%7Clabresult
 ```
 
 ---

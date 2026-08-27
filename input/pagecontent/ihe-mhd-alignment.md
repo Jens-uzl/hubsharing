@@ -50,7 +50,7 @@ IHE MHD defines several variants of `DocumentReference` to cater to different op
 | Profile Option | Structural Characteristics | Suitability for Belgian Interhub | Selection Status |
 | :--- | :--- | :--- | :--- |
 | **IHE MHD Minimal** (`IHE.MHD.Minimal.DocumentReference`) | Loosely constrained; optional `type`, `category`, `facilityType`, `practiceSetting`, `securityLabel`, `creation`. | **Insufficient**: Omits critical clinical and governance metadata required for federated filtering, security categorization, and XDS gateway bridging. | **Rejected** |
-| **IHE MHD Comprehensive (UnContained)** (`IHE.MHD.UnContained.Comprehensive.DocumentReference`) | Strictly constrained; mandates all XDS-equivalent attributes; uses **external URL references** (`Reference(Practitioner)`) for authors and patient demographics. | **Sub-optimal**: Forces client applications and gateways into high network latency due to the **N+1 query problem** across federated regional gateways. | **Rejected** |
+| **IHE MHD Comprehensive (UnContained)** (`IHE.MHD.UnContained.Comprehensive.DocumentReference`) | Strictly constrained; mandates all XDS-equivalent attributes; uses **external URL references** (`Reference(Practitioner)`) for authors and patient demographics. | **Sub-optimal**: Forces initiating hubs and gateways into high network latency due to the **N+1 query problem** across federated regional gateways. | **Rejected** |
 | **IHE MHD Comprehensive (Contained)** (`IHE.MHD.Comprehensive.DocumentReference`) | Strictly constrained; mandates XDS metadata; mandates **contained resources** (`#contained-id`) for `author`, `authenticator`, and `context.sourcePatientInfo`. | **Optimal**: Solves multi-author attribution, eliminates secondary network lookups, captures demographic snapshots, and complies fully with IHE and EHDS. | **SELECTED (Mandated)** |
 
 ### 2.1 Why MHD Minimal Was Insufficient
@@ -60,7 +60,7 @@ In the Belgian federated health ecosystem, document discovery (`getTransactionLi
 In a centralized repository, referencing external resources (`Practitioner/123`, `Organization/456`) is standard practice. However, in a **federated, multi-hub ecosystem**, the UnContained pattern creates severe architectural and operational hurdles:
 
 1. **The N+1 Network Query Problem**:
-   If a `getTransactionList` search returns 50 document entries, and each entry points to external Practitioner, Organization, and Patient endpoints across separate regional hubs (CoZo, RSW, BHN), the client EHR or initiating gateway would need to execute up to **150+ additional HTTP GET requests** just to render the search result table with physician names and hospital identifiers.
+   If a `getTransactionList` search returns 50 document entries, and each entry points to external Practitioner, Organization, and Patient endpoints across separate regional hubs (CoZo, RSW, BHN), the initiating hub would need to execute up to **150+ additional HTTP GET requests** across regional gateways just to assemble and render the search result with physician names and hospital identifiers.
 2. **Cross-Hub Gateway Authentication Overhead**:
    Dereferencing external endpoints across different hubs requires establishing authenticated, token-bearing sessions with multiple distinct regional security gateways, dramatically increasing failure rates and latency.
 3. **Resolution of the Federal `BeDocumentReference` `author 1..1` Constraint**:
@@ -194,8 +194,18 @@ Because `IHE.MHD.Comprehensive.DocumentReference` embeds contained resources (`B
 Currently, Belgian Interhub focuses on metadata discovery (`getTransactionList` / MHD ITI-67) and document retrieval (`getTransaction` / MHD ITI-68).
 
 #### Future Roadmap
-* Future versions of this IG will specify **IHE MHD ITI-65 (`Provide Document Bundle`)** for publishing new documents from hospital EHRs and laboratory systems to regional hubs.
+* Future versions of this IG will specify **IHE MHD ITI-65 (`Provide Document Bundle`)** for publishing and sharing new documents from hospital EHRs and laboratory systems to/via regional hubs.
 * ITI-65 will utilize `IHE.MHD.Comprehensive.ProvideBundle` to submit the `BeInterhubDocumentBundle` alongside its `BeInterhubDocumentReference` metadata envelope in a single transaction.
+
+---
+
+### 4.7 Topic 7: POST Search & FHIR `$retrieve-document` Operation Alignment with IHE MHD
+
+#### Context & Discussion
+To prevent patient identifiers (such as Belgian SSINs) and query criteria from leaking into web server access logs, reverse proxies, and browser histories, Belgian Interhub mandates **HTTP POST everywhere** across consumer-to-hub interfaces:
+1. **Document Discovery**: Clients send `POST [base]/DocumentReference/_search` with `application/x-www-form-urlencoded` body content. This is natively conformant with **IHE MHD ITI-67**, which explicitly permits Document Consumers to use either GET or POST search.
+2. **Document Retrieval**: Because FHIR R4 defines standard `read` as an HTTP GET interaction, Belgian Interhub specifies a national FHIR operation: **`POST [base]/DocumentReference/$retrieve-document`**.
+3. **Gateway Adaptation**: Where an IHE MHD responder sits behind the hub gateway, the gateway translates `POST $retrieve-document` into downstream **IHE MHD ITI-68 (`GET <attachment.url>`)**. This decouples Belgian clients from raw repository endpoints and prevents SSRF vulnerabilities. See [EHDS Alignment §5](ehds-alignment.html#5-architectural-alignment-belgian-post-everywhere-api--ihe-mhd--xds-gateway-adaptation) for the complete gateway translation matrix.
 
 ---
 
@@ -216,7 +226,7 @@ Currently, Belgian Interhub focuses on metadata discovery (`getTransactionList` 
 | **`authenticator`** | `0..1 MS` (Contained) | `0..1 MS` (Contained party) | Validator `hcparty` (`isvalidated`) |
 | **`securityLabel`** | `1..* MS` | `1..* MS` (`V3-Confidentiality`)| `transaction/confidentiality/cd` |
 | **`content.attachment.contentType`**| `1..1 MS` | `1..1 MS` (`application/fhir+json`)| `lnk/@MEDIATYPE` |
-| **`content.attachment.url`**| `1..1 MS` | `1..1 MS` (Direct ITI-68 URL) | Repository endpoint locator |
+| **`content.attachment.url`**| `1..1 MS` | `1..1 MS` (Direct ITI-68 URL / `$retrieve-document` target) | Repository endpoint locator |
 | **`content.attachment.creation`**| `1..1 MS` | `1..1 MS` (UTC Instant) | `transaction/date` + `time` |
 | **`content.attachment.data`**| **`0..0` (Prohibited)** | **`0..0` (Prohibited)** | N/A (Out-of-band retrieval) |
 | **`context.facilityType`**| `1..1 MS` | `1..1 MS` | Facility classification |

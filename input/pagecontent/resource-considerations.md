@@ -41,7 +41,7 @@ flowchart TD
 | **3. FHIR Document Bundle** (`Bundle.type = #document` + Root `Composition`) | Self-contained & immutable snapshot, mandatory narrative for safety, complete clinical context & author, fully aligned with IHE MHD & EHDS. | Requires full bundle retrieval for viewing (addressed by decoupled metadata). | **SELECTED PARADIGM** (Mandated) |
 
 ### 2.1 Why FHIR Messaging (`Bundle.type = #message`) Was Not Selected
-Messaging suits event-driven, asynchronous routing between endpoints that already know about one another, much as HL7 v2 did. The Belgian hub ecosystem works the other way round. It is an **indexing, discovery and retrieval** network: a document is registered once and then catalogued, searched years later, and fetched on demand by consumers the publisher never anticipated. Messaging has no registry query semantics to offer for any of that, and nothing equivalent to `ITI-67`.
+Messaging suits event-driven, asynchronous routing between endpoints that already know about one another, much as HL7 v2 did. The Belgian hub ecosystem works the other way round. It is an **indexing, discovery and retrieval** network: a document is registered or exposed once and then catalogued, searched years later, and fetched on demand across hubs by consumers the author never anticipated. Messaging has no registry query semantics to offer for any of that, and nothing equivalent to `ITI-67`.
 
 ### 2.2 Why Direct Granular RESTful Resource Access Was Not Selected
 Opening `Observation` and `DiagnosticReport` to direct federated querying would point clinical search traffic straight at operational source systems, widen the attack surface, and discard the provenance, institutional authorship and legal signature that make a result citable in the first place. There is a subtler cost as well: a record assembled on the fly from live source tables changes whenever those tables change, so what a clinician read last year cannot reliably be reproduced today.
@@ -66,7 +66,7 @@ Federated Discovery (MHD ITI-67) ──► Returns DocumentReference
 ├── Contained: BeOrganization (Answering Hub)
 ├── Contained: BeOrganization (Hospital / Laboratory)
 ├── Contained: BePractitioner (Authoring Physician)
-└── content.attachment.url ──► Retrieve Payload (ITI-68)
+└── content.attachment.url ──► Retrieve Payload ($retrieve-document / ITI-68)
 ```
 
 ### Architectural Benefits:

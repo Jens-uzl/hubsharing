@@ -8,7 +8,7 @@
 
 ## 1. Overview of the Metadata Model
 
-Discovery and retrieval are strictly separated in Interhub; the reasoning behind that separation is recorded in [Design Rationale §3](resource-considerations.html#3-the-role-of-contained-mhd-comprehensive-documentreference). A client querying for available health records (`getTransactionList`, specified in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences)) receives no clinical content at all. What comes back is a lightweight metadata envelope, the **`BeInterhubDocumentReference`**, conforming to **`IHE.MHD.Comprehensive.DocumentReference`** with **Contained References**.
+Discovery and retrieval are strictly separated in Interhub; the reasoning behind that separation is recorded in [Design Rationale §3](resource-considerations.html#3-the-role-of-contained-mhd-comprehensive-documentreference). An initiating hub querying for available health records (`getTransactionList`, specified in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences)) receives no clinical content at all. What comes back is a lightweight metadata envelope, the **`BeInterhubDocumentReference`**, conforming to **`IHE.MHD.Comprehensive.DocumentReference`** with **Contained References**.
 
 ```mermaid
 classDiagram
@@ -119,12 +119,12 @@ The `BeInterhubDocumentReference` profile derives directly from **`IHE.MHD.Compr
 | **`securityLabel`** | `1..*` | `CodeableConcept` | Confidentiality level (`V3-Confidentiality`: `N`, `R`, `V`). |
 | **`content.attachment.contentType`**| `1..1` | `code` | MIME type (`application/fhir+json` or `application/pdf`). |
 | **`content.attachment.language`** | `1..1` | `code` | BCP-47 / RFC 5646 language tag (`nl-BE`, `fr-BE`, `de-BE`, `en`). |
-| **`content.attachment.url`** | `1..1` | `url` | Direct ITI-68 retrieve endpoint for the document bundle. |
+| **`content.attachment.url`** | `1..1` | `url` | Direct retrieve endpoint for the document bundle (resolved by `$retrieve-document` or downstream ITI-68). |
 | **`content.attachment.creation`** | `1..1` | `instant` | Document creation timestamp (UTC). |
 | **`content.format`** | `1..1` | `Coding` | Coded format URI (e.g. `urn:be:fgov:ehealth:lab:document:1.0`). |
 | **`relatesTo`** | `0..*` | `BackboneElement` | Logical reference to related document (`relatesTo.target.identifier`). |
 
-> **Note on Removed Elements**: Elements **`docStatus`** and **`content.attachment.data`** are constrained to `0..0` by IHE MHD Minimal and Comprehensive profiles and are **prohibited** in `BeInterhubDocumentReference`. Document lifecycle status is governed by `status` and `relatesTo`, while payload retrieval is performed out-of-band via `content.attachment.url` (ITI-68).
+> **Note on Removed Elements**: Elements **`docStatus`** and **`content.attachment.data`** are constrained to `0..0` by IHE MHD Minimal and Comprehensive profiles and are **prohibited** in `BeInterhubDocumentReference`. Document lifecycle status is governed by `status` and `relatesTo`, while payload retrieval is performed out-of-band via `$retrieve-document` (or downstream `content.attachment.url` / ITI-68).
 
 ### 2.1 Relationship to IHE MHD & Federal Profiles
 
