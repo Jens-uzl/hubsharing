@@ -44,7 +44,7 @@ _build.bat
 | **`BeInterhubDocumentReference`** | Profile | Metadata discovery carrier for `getTransactionList` (MHD ITI-67) |
 | **`BeInterhubDocumentBundle`** | Profile | Canonical FHIR Document Bundle (`type = #document`) for `getTransaction` (MHD ITI-68) |
 | **`BeInterhubLabComposition`** | Profile | Root Composition for Laboratory Report documents (LOINC 11502-2) |
-| **`BeTelemonitoringComposition`** | Profile | Root Composition for Telemonitoring documents (LOINC 10185-7) |
+| **`BeTelemonitoringComposition`** | Profile | Root Composition for Telemonitoring documents |
 | **`TelemonitoringDiagnosticReport`** | Profile | Telemonitoring diagnostic report with carepath and session extensions |
 | **`BeExtPatientAccess`** | Extension | Belgian patient portal visibility rules (`yes`, `no`, `never`, delay dates) |
 | **`BeExtHomeCommunityId`** | Extension | Regional Hub Home Community ID (`urn:oid:1.3.6.1.4.1.21297.1.X`) |
