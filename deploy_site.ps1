@@ -20,6 +20,8 @@ Write-Host "=================================================================" -
 # ------------------------------------------------------------------------------
 Write-Host "`n[1/6] Checking Java environment..." -ForegroundColor Yellow
 $JavaCandidates = @(
+    "$env:USERPROFILE\.jdks\ms-21.0.10\bin\java.exe",
+    "$env:USERPROFILE\.jdks\*\bin\java.exe",
     "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1.4\jbr\bin\java.exe",
     "C:\Program Files\Eclipse Adoptium\jdk-21*\bin\java.exe",
     "C:\Program Files\Java\jdk-21*\bin\java.exe",
@@ -94,6 +96,9 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "`n[5/6] Building official IG website with IG Publisher..." -ForegroundColor Yellow
 $txArg = if ($NoTx) { "-tx n/a" } else { "" }
 & $JavaExe -Xmx4096m "-Dfile.encoding=UTF-8" -jar $PublisherJar -ig . $txArg -no-sushi
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "FHIR IG Publisher build failed (exit code $LASTEXITCODE)."
+}
 
 # ------------------------------------------------------------------------------
 # 6. Stop Old Server, Start serve.js & Open Browser
