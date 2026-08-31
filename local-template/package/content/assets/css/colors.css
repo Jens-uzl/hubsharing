@@ -1,44 +1,34 @@
 :root {
-
-  --ig-status-text-color: #003082;         /* 1. IG Title and status text color */
-  --navbar-bg-color: #003082;              /* 2. Header container color */
-  --footer-bg-color: #707070;              /* 3. Footer background color */
-  --footer-container-bg-color: #003082;   /* 4. Footer container color */
-  --stripe-bg-color: #002060;             /* 5. Header strip color */
-
-  --btn-hover-color: #002060;             /* 6. Menu button hover color */
-  --btn-active-color: #001540;            /* 7. Menu button active color */
-  --btn-text-color: #e6e6e6;             /* 8. Menu button text color */
-  --btn-gradient-start-color: #428bca;   /* 9. Menu item gradient start color */
-  --btn-gradient-end-color: #357ebd;     /* 10. Menu item gradient end color */
-  --btn-gradient-start-color-alpha: #ff428bca; /* 11. Menu item gradient start color (with alpha) */
-  --btn-gradient-end-color-alpha: #ff357ebd;   /* 12. Menu item gradient end color (with alpha) */
-  --link-color: #003082;                 /* 13. Hyperlink text color */
-  --link-hover-color: #002060;           /* 14. Hyperlink text hover color */
-
-  --publish-box-bg-color: yellow;        /* 15. Publish box background color */
-  --publish-box-border: 1px solid #0A0008; /* 16. Publish box border definition */
-
-  --toc-box-bg-color: #ddeeff;           /* 17. TOC box background color */
-  --toc-box-border: 1px solid navy;      /* 18. TOC box border definition */
-
-  --stu-note-background-color: #eef4ff;  /* 19. (STU) Note box background color */
-  --stu-note-border-left-color: #80aaee; /* 20. (STU) Note box border color */
-
-  --ig-header-color: #f5f5f5;            /* 21. Header color (sides) */
-  --ig-header-container-color: #ffffff;  /* 22. Header container color (center) */
-  --footer-nav-bg-color: #f5f5f5;        /* 23. Footer navigation background color */
-
-  --footer-text-color: #ffffff;          /* 24. Footer highlight font color */
-  --footer-hyperlink-text-color: #81BEF7; /* 25. Footer hyperlinks font color */
-  --footer-highlight-text-color: #ffff77; /* 26. Footer highlight font color */
-
-  --breadcrumb-bg-color: #f5f5f5;        /* 27. Breadcrumb background color */
-  --breadcrumb-text-color: #555555;      /* 28. Breadcrumb font color */
-
-  --dragon-background-color: #fffbf7;    /* 29. Dragon background color */
-  --dragon-text-color: #101020;          /* 30. Dragon font color */
-
+  --ig-status-text-color: #003082;
+  --navbar-bg-color: #003082;
+  --footer-bg-color: #707070;
+  --footer-container-bg-color: #003082;
+  --stripe-bg-color: #002060;
+  --btn-hover-color: #002060;
+  --btn-active-color: #001540;
+  --btn-text-color: #e6e6e6;
+  --btn-gradient-start-color: #428bca;
+  --btn-gradient-end-color: #357ebd;
+  --btn-gradient-start-color-alpha: #ff428bca;
+  --btn-gradient-end-color-alpha: #ff357ebd;
+  --link-color: #003082;
+  --link-hover-color: #002060;
+  --publish-box-bg-color: yellow;
+  --publish-box-border: 1px solid #0A0008;
+  --toc-box-bg-color: #ddeeff;
+  --toc-box-border: 1px solid navy;
+  --stu-note-background-color: #eef4ff;
+  --stu-note-border-left-color: #80aaee;
+  --ig-header-color: #f5f5f5;
+  --ig-header-container-color: #ffffff;
+  --footer-nav-bg-color: #f5f5f5;
+  --footer-text-color: #ffffff;
+  --footer-hyperlink-text-color: #81BEF7;
+  --footer-highlight-text-color: #ffff77;
+  --breadcrumb-bg-color: #f5f5f5;
+  --breadcrumb-text-color: #555555;
+  --dragon-background-color: #fffbf7;
+  --dragon-text-color: #101020;
 }
 
 #uzleuven-nav {
@@ -51,23 +41,7 @@
   height: 70px;
 }
 
-/* ============================================================================
-   Narrative content tables
-   ----------------------------------------------------------------------------
-   Markdown tables in input/pagecontent/*.md are converted by the IG publisher
-   (commonmark dialect) into <table class="grid">. The publisher's own fhir.css
-   styles table.grid as a bare 3px-padded verdana grid with no width constraint,
-   and bootstrap-fhir.css only relaxes inline code to white-space:normal, which
-   still refuses to break inside a long token. The result on the wide mapping
-   tables of this IG is a table whose columns are forced at least as wide as the
-   longest URL/OID they contain, so the table overflows the text column and the
-   remaining columns get squeezed.
-
-   These rules live in colors.css because that is the stylesheet this local
-   template overrides, and it is linked after fhir.css and bootstrap-fhir.css.
-   They are scoped to #segment-content so header/footer chrome is untouched.
-   ============================================================================ */
-
+/* Base Table Styling */
 #segment-content table.grid {
   width: 100%;
   max-width: 100%;
@@ -101,8 +75,6 @@
   font-size: 13px;
   line-height: 1.45;
   vertical-align: top;
-  /* long OIDs, canonical URLs and KMEHR paths must break inside the cell
-     instead of dictating the column width */
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -115,8 +87,6 @@
   background-color: #eef4ff;
 }
 
-/* Inline code is everywhere in these tables: keep it readable but breakable,
-   and drop the heavy per-span padding that made dense rows look ragged. */
 #segment-content table.grid code {
   padding: 0 2px;
   font-size: 12px;
@@ -125,23 +95,64 @@
   word-break: break-word;
 }
 
-/* Row-label column: the mapping tables lead with a short bolded element name. */
 #segment-content table.grid > tbody > tr > td:first-child {
   white-space: normal;
 }
 
-/* Nested grids (value set expansions, etc.) must not inherit the outer chrome. */
 #segment-content table.grid table.grid {
   margin: 0;
   font-size: 12px;
 }
 
-/* Narrow viewports: let a wide table scroll horizontally inside the page
-   instead of stretching the page itself. */
 @media (max-width: 991px) {
   #segment-content table.grid {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+}
+
+/* GitHub-style Table Override */
+#segment-content table.grid {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+#segment-content table.grid th,
+#segment-content table.grid td {
+  padding: 8px 16px;
+  border: 1px solid #d0d7de;
+}
+
+#segment-content table.grid thead tr th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+  text-align: left;
+  color: #1f2328;
+}
+
+#segment-content table.grid tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+#segment-content table.grid tbody tr:nth-child(even) {
+  background-color: #f6f8fa;
+}
+
+#segment-content table.grid tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+#segment-content table.grid td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2328;
 }
