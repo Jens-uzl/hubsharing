@@ -6,14 +6,75 @@
 > * **Summarised here, specified in full elsewhere:** the metadata envelope → [Envelope & Metadata](envelope-and-metadata.html); the two transactions → [Transactions](transactions.html); authentication, tamper-proofing and auditing → [Security & Authentication](security.html); payload encryption → [End-to-End Encryption](end-to-end-encryption.html); the SOAP crosswalk behind the dual-stack gateway → [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html).
 > * **Next:** [Design Rationale](resource-considerations.html) — why this architecture shares FHIR *documents* rather than messages or granular resources.
 
-## 1. The Belgian Federated Health Ecosystem
+## 1. The Belgian Federated eHealth Ecosystem
 
-Belgium never built a central national repository, and that decision still shapes everything downstream. Under the governance of the eHealth Platform (`ehealth.fgov.be`), clinical data stays where it was produced: in the **hub sources**, meaning the source systems of the care organisations themselves — hospitals, independent laboratories, pharmacies, polyclinics, practice organisations, care homes, and every other organisation type in the KMEHR `CD-HCPARTY` classification. Regional hubs index that metadata or route discovery queries to distributed source registries, routing retrieval requests to the authoritative repositories. They do not hold all clinical data in a single central store.
+### 1.1 Hubs and vaults, the latter mentioned in this section only
 
-### 1.1 Scope Boundaries: Intrahub vs. Interhub
+Healthcare organizations or individual care providers may make their data
+available to authorized actors either by making these data accessible from their
+computer systems, or by uploading a copy of the data onto a central location. In
+very simplistic terms, the former approach is the one used with the system of the
+eHealth hubs, while the latter is used with the healthcare 'vaults'.
 
-To understand the architecture and the normative boundary of this specification, a fundamental distinction must be maintained between **Intrahub** and **Interhub** communication:
+This is an overly simplistic view insofar as a hub can also opt to store some data on behalf
+of its partners. But for a hub the primary operation mode is to provide access to
+data that resides in a care institution, with local storage at the hub more of an
+exception. With a vault the data are always managed locally.
 
+For this document, except in the introductory section, the difference between a hub and a vault is irrelevant. For simpicity and
+conciseness, this text talks about 'hubs', but vaults or any future system in-between is
+included as well.
+
+### 1.2 Intrahub versus interhub communication
+
+For the Belgian eHealth system, the choice was made to not centralize completely. A first motivation was a matter a
+principle, that the government should not have excessive control over health data or be able to readily access it. Thus,
+the hubs are primarily under control of the working field, be it operating in a highly regulated context.
+A second motivation was societal, that there should be sufficient room for separate initiatives to foster progress.
+
+This leads to an architecture in which there can be any number of hubs (even if it was agreed that there must be only
+one 'formal' vault per political region). A number of care organizations or other actors arrange amongst them
+to make their data available, in a health network that is called a hub for largely historical reasons.
+There is one metahub that provides basic services (such as management of the citizen's informed consent to this
+extended data sharing, and enabling the citizen to regulate access) and that enables the hubs to cooperate by keeping
+track of which hub knows at all about which citizen.
+
+Eventueel zou een illustratie kunnen worden gebruikt gebaseerd op een slide van Frank Robbe.
+
+**Fundamental to this architecture is that each hub is free to choose the internal implementation.** The terms Intrahub
+and Interhub communication are often used. Using that wording, Intrahub communication is outside the scope of this
+guide, as it need not (and must not) be standardized. With greater nuance:
+
+* The data sources such as the hospitals or clinical laboratories connect to their hub using the Intrahub protocol agreed
+  internally within this health network. These actors not only function as a source but also request information from the
+  system. They to that using the internally agreed mechanisms as well. Broadly speaking, each of such institutions is
+  connected to a single hub, although that is not a formal requirement.
+* The hubs cooperate and exchange information between them - in a way that provides a view to the parties
+  that request the information as if there was one single overall system - using the highly standardized
+  Interhub protocol.
+  **This Implementation Guide only specifies the ~~normative~~ FHIR-based Interhub standard for Hub-to-Hub metadata discovery (ITI-67) and document retrieval (ITI-68).**
+* Patients or their representatives in practice use any of a number of web portals or mobile apps to access health data or to interact with
+  the system, potentially multiple systems. That can be portals or apps provided by a particular hub, or by a commercial
+  actor or the government. In the latter situations, the connections to the hubs in the backend are as in the next bullet. 
+* Healthcare professionals such as general practitioners (or more in general actors in the fitrst line) may use any portal or
+  app just as patients do, but their computer systems typically have a system-to-system connection with a hub of their choise.
+  Such connections can be established using the proprietary facilities provided by a particular hub. However, for practical
+  or commercial reasons it is often preferred to retrieve information using a protocol that is independent of the hub. Therefore,
+  all (most?) hubs enable such retrieval using (a slight variant of) the Interhub protocol. The use of this protocol is a deliberate
+  choice. The central patient portal mijngezondheid.be / masante.belgique.be retrieves data from the different hubs using that
+  common protocol. Differences between the communication between the hubs and this standard communication with the system of the end user
+  are related to authentication and authorization.
+* Similarly, the way in which the end user's computer systems of the previous bullets can be used enable that user
+  to add information into the system, should probably be standardized to a substantial degree, even if that is not fornmally
+  imposed. The current interhub protocol is primarily about data retrieval, though, as is the focus in this text. 
+
+Although a system operated by an end user may (essentially) use the Interhub protocol, communication between that system and this hub
+will not be considered interhub communication. The term interhub communication is reserved for the communication between the
+accredited eHealth Hubs, the metahub, and the future Belgian National Contact Point for eHealth (NCPeH) of th EHDS.
+
+Ik heb onderstaande proberen verwerken in de vorige paragrafen:
+
+<strike>
 * **Intrahub (OUT OF SCOPE)**:
   * Clinical applications (hospital EHRs, laboratory information systems, primary care practice systems, patient/regional portals, and telemonitoring platforms) connect exclusively to their designated regional Hub via **Intrahub endpoints**.
   * Intrahub exchanges utilize local or historical protocols (such as KMEHR SOAP/REST services or proprietary hub-internal APIs).
@@ -25,8 +86,12 @@ To understand the architecture and the normative boundary of this specification,
   * Only accredited eHealth Hubs (CoZo, RSW, BHN, Zodap) and the Belgian National Contact Point for eHealth (NCPeH) participate in Interhub exchanges.
   * Clinical applications and source systems **never** connect directly to the Interhub network.
   * **This Implementation Guide specifies the normative FHIR-based Interhub standard for Hub-to-Hub metadata discovery (ITI-67) and document retrieval (ITI-68).**
+</strike>
+  * 
+### 1.3 Key Actors & Nodes in the Network
 
-### 1.2 Key Actors & Nodes in the Network
+Ik moet de tekening nog beter bekijken. De pijlen komen mogelijk verwarrend over, want wat stellen die uberhaupt voor?
+Het gaatr blijkbaar niet om de richting van de communicatie.
 
 ```mermaid
 flowchart TD
@@ -58,20 +123,36 @@ flowchart TD
 ```
 
 1. **National Metahub**:
-   * Acts as a central directory indicating which regional hubs hold documents for a specific patient (identified by their national **SSIN / INSS**).
-   * Holds the national registers of informed consent (IC) and therapeutic links. These registers are consulted by the **initiating hub** when it performs its own access control, before it emits an Interhub request.
+   * Acts as a central directory indicating which regional hubs may have information about a particular patient (identified by national **SSIN / INSS**).
+   * Holds the national registers of informed consent (IC) and most of the therapeutic links (such as the TR derived from the status
+     of holder of the Global Medical Record - other TRs, notibly those with specialist, are managed internally within the hub as
+     sensitive personal medical information can be derived from them). These registers are consulted by the **initiating hub** [waarom bold] when it performs its own access control, before it emits an Interhub request.
 2. **eHealth Hubs**:
-   * **CoZo** (Collaboratief Zorgplatform).
-   * **RSW** (Réseau Santé Wallon).
-   * **BHN** (Brussels Health Network).
-   * **Zodap** (Zorg Data Platform).
-   * Each hub acts as a regional Document Registry and Document Gateway, managing indexing and cross-hub routing. When a hub *initiates* a query, it is also the actor responsible for access control (see §5).
-   * **The list is not closed, and not every node behaves identically.** The federation also carries nodes that are not regional document registries in this sense — most notably a **patient-facing vault** (Vitalink), whose content is by definition accessible to the patient and whose request and response conventions differ from a classic hub. Hubs also merge and are renamed over time, and a hub that has cached a patient link to a decommissioned hub identifier must still resolve it. An Interhub implementation therefore MUST treat the hub list as configuration resolved from the Metahub at runtime, never as a constant compiled into the system, and MUST tolerate a patient link pointing at a hub identifier it does not recognise.
-3. **Hub Sources (Connected Source Systems & Clinical Repositories)**:
-   * Authoritative source systems where clinical documents (laboratory reports, discharge summaries, imaging studies, telemonitoring records) are created, validated, and stored.
-   * A hub source connects to its regional hub via Intrahub interfaces — whether by publishing documents on a hub, sharing documents via a hub, or exposing its own local registry and repository to the hub. It is **any** connected care organisation — not only a hospital (see §1.3).
+   * The primary hubs (or care networks) are **CoZo** (Collaboratief Zorgplatform), **RSW** (Réseau Santé Wallon),
+     **BHN** (Brussels Health Network), and **ZODAP** (ZOrg DAta Platform). For the purpose of this text, the eHealth vaults of
+     the Walloon and Brussels region concide with the hub of those respective regions. The flemish vault is Vitalink.
+     FarmaFlux is a secondary hub - for want of a better term - that provides information collected by the community pharmacies (at the time of this
+     writing excluding the pharmacies of the hospitals). No end users are directly connected to this hub: it provides these data
+     to the 'primary' hubs.
+   * [Dit moet ik nog beter lezen en bekijken of de verwoording beter lijkt dan wat ik zelf eerder had voorgesteld. Dat van Vitalink vind
+     ik een vreemde verwoording, en dat van die outdated links lijkt me hier niet nodig. Resolving die links at run time dreigt als een rode lap te werken voor RSW.] **The list is not closed, and not every node behaves identically.** The federation also carries nodes that are not regional document registries in this sense — most notably a **patient-facing vault** (Vitalink), whose content is by definition accessible to the patient and whose request and response conventions differ from a classic hub. Hubs also merge and are renamed over time, and a hub that has cached a patient link to a decommissioned hub identifier must still resolve it. An Interhub implementation therefore MUST treat the hub list as configuration resolved from the Metahub at runtime, never as a constant compiled into the system, and MUST tolerate a patient link pointing at a hub identifier it does not recognise.
+   * [Ik vind het eerste deel van deze paragraaf vreemd verwoord, en de nadruk op index lijkt me gevaarlijk. Wat wil je zeggen? Wil je een vergelijking trekken met XDS? Het laatste deel is dan weer koet door de bocht, en hoort dat hier zo vluchtig te worden vermeld] 
+     Each hub acts as a regional Document Registry and Document Gateway, managing indexing and cross-hub routing. When a hub *initiates* a query, it is also the actor responsible for access control (see §5).
+3. **Data Sources ~~Hub Sources (Connected Source Systems & Clinical Repositories)~~** [Ik begrijp niet waarom zo'n indrukwekkende termen worden gebruikt. Er is wellicht een goede reden toe, maar ik begin dat over allerlei grootste zaken na te denken en dat is misschien niet nodig]:
+   * [Het is me eigenlijk niet duidelijk waarom je het hierover hebt. Ik doe een gok.] For the purpose of this text, these are the source systems, in the technical sense [??] that share medical data such as medical reports, laboratory results, images or other technical results, results from telemonitoring...
+     Within the context of this text it is irrelevant whether the technical system in which the data resides is maintained by the organization or actor that generated the information:
+     that organization or actor can have outsourced operational details. This text is not about juridical responsabilities for data quality anyhow.
+     As their is freedom in the technical agreements between a hub and its data sources, this text is not to impose any particular architecture.
+     That being said, it might be considered to use common principles if the advantages of doing so outweigh the restrictions in local creativity.
+     The proposed architecture must not impose a particular approach without very good reasons. As an illustration, the architecture preferrably should not
+     assume that there is a central index within the hub in which the documents are referenced that are shared by this network.
+   [Waarom authoritative en waarom moeten die data daar gestockeerd zijn?] ~~Authoritative source systems where clinical documents (laboratory reports, discharge summaries, imaging studies, telemonitoring records) are created, validated, and stored.~~
+   * [Zit deels in het vorige, maar het is me dus nog steeds nietr duidelijk welke accenten je wil vermelden.] A hub source connects to its regional hub via Intrahub interfaces — whether by publishing documents on a hub, sharing documents via a hub, or exposing its own local registry and repository to the hub. It is **any** connected care organisation — not only a hospital (see §1.3).
 
 ### 1.3 What Counts as a Hub Source
+
+[Ik zou hier precies geen aparte sectie voor voorzien: ze is niet nodig en op het einde zeg je zelf dat het hier maar om voorbeelden gaat.
+De laatste paragraaf lijkt me de belangrijkste. Die zouden we ook kunnen verwerken op het einde van de vorige sectie.]
 
 A **hub source** is any care organisation whose source system publishes documents on or shares them via a hub (or exposes its local registry and repository to the hub) and answers retrievals from it. Hospitals are one example among many; the KMEHR `CD-HCPARTY` organisation types give the real range.
 
@@ -93,7 +174,7 @@ Throughout this implementation guide, **"hub source"** designates this entire cl
 
 Historically, Interhub communication was specified using SOAP Web Services exchanging XML payloads conforming to Belgian **KMEHR** schemas (`getTransactionList`, `getTransaction`, `putTransaction`, `getTransactionAccessList`).
 
-In their place, the modernized Belgian Interhub specification puts **IHE MHD (Mobile access to Health Documents)** on **HL7® FHIR® R4**, giving the exchange a RESTful shape:
+In contrast, the updated Interhub specification in this document proposes [prescribes] **IHE MHD (Mobile access to Health Documents)** on **HL7® FHIR® R4 [waarom R4?]**, in a RESTful approach:
 
 ```mermaid
 flowchart TD
@@ -128,13 +209,16 @@ flowchart TD
     Responder <===>|"Cross-Border Interhub"| EHDS
 ```
 
-The diagram shows the *shape* of the exchange only. Clinical applications communicate exclusively with their local Hub via Intrahub protocols (out of scope), and the local Hub initiates Interhub transactions across the federation. Each layer of the Interhub specification is detailed on its own page: the **metadata layer** element by element in [Envelope & Metadata](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), the **two transactions** (ITI-67 / ITI-68) in [Transactions](transactions.html), the **cross-border branch** in [EHDS Alignment](ehds-alignment.html), and the reasoning behind carrying payloads as document bundles at all in [Design Rationale](resource-considerations.html#2-evaluation-of-candidate-carrier-paradigms).
+The diagram shows the *shape* [wat bedoel je mer deze term?] of the exchange only: the clinical applications [wat zijn dat?] communicate exclusively with their local Hub via Intrahub protocols (out of scope [maar dan weer niet voor bv. de huisartsenpakketten...]), and the local Hub initiates Interhub transactions across the federation. Each layer of the Interhub specification is detailed on its own page: the **metadata layer** element by element in [Envelope & Metadata](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), the **two transactions** (ITI-67 / ITI-68) in [Transactions](transactions.html), the **cross-border branch** in [EHDS Alignment](ehds-alignment.html), and the reasoning behind carrying payloads as document bundles at all in [Design Rationale](resource-considerations.html#2-evaluation-of-candidate-carrier-paradigms).
 
 ---
 
-## 3. Federated Cross-Hub Routing & Identifiers
+## 3. ~~Federated~~Cross-Hub Routing & Identifiers
 
-In a cross-hub exchange, an **initiating hub** queries or retrieves documents from one or more **responding hubs**. The responding hubs trust the caller: access control has already happened locally, at the initiating hub (see §5). What governs the routing itself is a set of standardized identifiers registered in the Belgian eHealth OID tree (`1.3.6.1.4.1.21297`):
+In a cross-hub exchange [information retrieval? Gaat het ooit om meer dan eenrichting?], an **initiating hub** queries for the availability of information or retrieves information from a **responding hub**.
+The initiating hub has performed most of the access control checks and the responding can (and for some checks needs) to trust the initiating hub (see §5).
+
+What governs the routing itself [voor mij vreemde verwoording] is a set of standardized identifiers registered in the Belgian eHealth OID tree (`1.3.6.1.4.1.21297`):
 
 ### 3.1 Belgian National Identifiers
 
@@ -156,7 +240,7 @@ These identifiers are bound to concrete `BeInterhubDocumentReference` elements i
 ### 3.2 Routing Mechanics via `homeCommunityId`
 
 1. **Discovery (`getTransactionList` / ITI-67)**:
-   * The initiating hub retrieves the patient links (originally stored in the metahub) and queries each of the eHealth Hubs for the list.
+   * The initiating hub retrieves the patient links (~~originally~~made available by the metahub) and queries each of the eHealth Hubs for the list.
    * Every returned `BeInterhubDocumentReference` contains the mandatory extension `homeCommunityId` (e.g. `urn:oid:1.3.6.1.4.1.21297.1.3`).
 2. **Retrieval (`getTransaction` / ITI-68)**:
    * The initiating hub inspects `DocumentReference.content.attachment.url` and `homeCommunityId` to dispatch the retrieval request directly to the authoritative responding hub repository hosting the document bundle.
@@ -165,14 +249,16 @@ The query syntax for step 1 and the retrieval call for step 2 are specified in [
 
 ---
 
-## 4. Dual-Stack Gateway Architecture (Transition Phase)
+## 4. Dual-Stack Gateway Architecture during the Transition Phase [Waarom Al Die HoofdLetters?]
 
-Migration cannot be a flag day. KMEHR connectors in production will outlive the specification that replaces them, so Belgian hubs deploy a **dual-stack mediation gateway** that speaks both protocols at once:
+The hubs do not consider temporarily suspending their societal role while their architecture is upgraded. Besides, some KMEHR connectors
+in clinical production systems are expected to outlive this very version of the specification that makes them outdated. At least the 'primary'
+hubs (see §1.3 for this informally used term) will install a **dual-stack mediation [mediation?] gateway** that can handle both protocols:
 
 * **Legacy KMEHR Interhub / Intrahub → Modern FHIR Hub**: The gateway receives SOAP `getTransactionList` or `getTransaction` requests, queries the internal FHIR registry/repository via MHD ITI-67 / ITI-68, and transforms the resulting `DocumentReference` and `Bundle (type=document)` back into KMEHR `TransactionSummaryType` or `FolderType` XML.
 * **Modern FHIR Initiating Hub → Legacy Hub Source / Legacy Responding Hub**: The gateway accepts RESTful POST searches and document retrieval requests, translates them into SOAP KMEHR Web Service calls to legacy systems, transforms the returned KMEHR XML / attachments into standardized FHIR Document Bundles, and returns them over Interhub.
 
-The field-by-field transformation rules the gateway applies in both directions — including how a FHIR Document Bundle is encapsulated inside a KMEHR `<lnk>` element during the transition — are specified in [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html#4-encapsulation-strategy-fhir-document-inside-kmehr-transition-phase).
+The field-by-field [wat bedoel je met deze term?] transformation rules the gateway applies in both directions — including how a FHIR Document Bundle is encapsulated inside a KMEHR `<lnk>` element during the transition — are specified in [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html#4-encapsulation-strategy-fhir-document-inside-kmehr-transition-phase).
 
 ---
 
@@ -180,16 +266,45 @@ The field-by-field transformation rules the gateway applies in both directions �
 
 > **This section is a summary.** The normative security specification — the three routes in full, DPoP / RFC 9421 tamper-proofing, the initiating/responding responsibility split, and IHE BALP auditing — is on the [Security & Authentication](security.html) page and takes precedence over the overview below.
 
-Every Interhub transaction takes place under Belgian healthcare law, the Patient Rights Act and the GDPR.
+~~Every Interhub transaction takes place under Belgian healthcare law, the Patient Rights Act and the GDPR.~~ [Dat lijkt me vanzelfsprekend. Als we toch enkele
+regelgevingen willen vermelden, dan zouden we m.i. juist vollediger moeten zijn en is er geen beginnen aan zonder dit door een jurist te laten schrijven.]
 
-### 5.1 Trust Model: the Initiating Hub Owns Access Control
+### 5.1 Trust Model Between The Initiating and Responding HuBS in InterHub CoMMunication
 
-Interhub is a **federation of mutually trusted hubs**. A responding hub establishes *which hub* is calling and then answers the request. It does not re-open the question of whether the end user behind that call is entitled to the patient's data.
+[Vermelden dat dit ter informatie is? Het moet wel worden ondersteund door de architectuur, bv. wat betreft de toegangsmatrix.]
 
-* The **initiating hub** performs all access control before emitting an Interhub request — for example by querying the **Metahub** to confirm that an informed consent (IC) and/or therapeutic link exists, or by resolving the same facts from its own local database. The mechanism is a local matter and out of scope for this specification.
-* The **responding hub** performs technical validation only (mTLS and calling-hub authentication, replay/tamper-proofing, query syntax) and writes its audit trail. It does not verify consent, therapeutic links, or practitioner entitlement.
+The hubs establised amongst them a set of rules about security in interhub communication. (Disclaimer: Vitalink has suggested that it may not want to adhere to all of thse rules.)
+As mentioned previously in this chapter, in interhub communication there is an initiating and a responding hub. A hub never engages in
+'medical communication' with another hub on its own initiative, as the hub is not itself a healthcare organization that provides care to patients,
+and thus has no reason to access any patient's medical data. Currently, some hubs retrieve data sets from the metahub for their internal operations, such
+as the updates to the list of patients who provided their IC, but for technical reasons only (in this case, to not have to inquire the existence of
+the IC at run time). With future projects, more of such purely technical communication might emerge, though probably still very limited. 
+
+* At the time of this writing, the hubs always expect the responsible healthcare provider to be provided in each request. If this physical person
+  is affiliated to an organization, for the current request, that organization is provided as well. For this technical document there is no need to precisely
+  define the term 'responsible'. It could be considered that in future applications the organization itself becomes responsible for some of the retrievals, as there
+  is no notion of the physical persion behind the computer screen (or the care provider who is looking over the shoulders of the person behind the keyboard),
+  but such would be decided at national level, not at the discretion of any individual hub.
+* The **initiating hub** performs or checks authentication and the role of the and user and/or the organization. It may rely for that on systems provided
+  by the government or on internal systems. The government may propose or even impose particular authentication mechanisms. The concept of the CoT (Circle of Trust)
+  was introduced because authentication mechanisms that may make sense in a telematics setting may not be feasible within a physically enclosed setting such as
+  a hospital, or even risk to lower security in such a setting.
+* The initiating hub also performs most of the checks for access control, at the time of this writing whether the patient has provided the IC for data sharing
+  through this system, whether there is sufficient proof of a therapeutic relation (TR), and whether the user has not been excluded from access by the
+  patient. Some of the information for those checks is only available to this hub and is not available in another component of the eHealth ecosystem, often
+  because of societal considerations.
+  The initiating hub does not currently decide what information the user is entitled to see: that is done by the responding hub, as that hub has the detailed
+  information needed for that operation. (It has been proposed that the initiating hub provide to the responding hub the indicated access, though, in part
+  for practical reasons).
+* ~~all access control before emitting an Interhub request — for example by querying the **Metahub** to confirm that an informed consent (IC) and/or therapeutic link exists, or by resolving the same facts from its own local database. The mechanism is a local matter and out of scope for this specification.~~
+* The **responding hub** could perform some of the checks that the initiating hub performed, but is not required to do so. This hub has to trust the initiating
+  hub anyhow, as some checks can only be performed by the latter. The responding hub is responsible for detailed filtering of the information, though, potentially
+  delegating that to the Data Source. Furthermore it must perform technical validation (including such aspects as authentication of the initiating hub, replay/tamper-proofing,
+  and query syntax checking) and write an entry into its audit trail [sommige van die zaken moet de initiating hub toch ook doen?]. ~~It does not verify consent, therapeutic links, or practitioner entitlement.~~
 
 ### 5.2 Connection Routes
+
+[Moet ik nog lezen. Ik vind de titel alvast vreemd. Gaat het niet over authenticatie?]
 
 Three distinct connection routes are on the table for authenticating the calling hub.
 
