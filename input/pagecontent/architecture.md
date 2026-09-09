@@ -298,7 +298,6 @@ the IC at run time). With future projects, more of such purely technical communi
 
 ### 5.2 Connection Routes
 
-[Moet ik nog lezen. Ik vind de titel alvast vreemd. Gaat het niet over authenticatie?]
 
 Three distinct connection routes are on the table for authenticating the calling hub.
 
