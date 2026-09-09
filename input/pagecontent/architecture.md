@@ -21,13 +21,13 @@ of its partners. But for a hub the primary operation mode is to provide access t
 data that resides in a care institution, with local storage at the hub more of an
 exception. With a vault the data are always managed locally.
 
-For this document, except in the introductory section, the difference between a hub and a vault is irrelevant. For simpicity and
+For this document, except in the introductory section, the difference between a hub and a vault is irrelevant. For simplicity and
 conciseness, this text talks about 'hubs', but vaults or any future system in-between is
 included as well.
 
 ### 1.2 Intrahub versus interhub communication
 
-For the Belgian eHealth system, the choice was made to not centralize completely. A first motivation was a matter a
+For the Belgian eHealth system, the choice was made to not centralize completely. A first motivation was a matter of
 principle, that the government should not have excessive control over health data or be able to readily access it. Thus,
 the hubs are primarily under control of the working field, be it operating in a highly regulated context.
 A second motivation was societal, that there should be sufficient room for separate initiatives to foster progress.
@@ -39,7 +39,6 @@ There is one metahub that provides basic services (such as management of the cit
 extended data sharing, and enabling the citizen to regulate access) and that enables the hubs to cooperate by keeping
 track of which hub knows at all about which citizen.
 
-Eventueel zou een illustratie kunnen worden gebruikt gebaseerd op een slide van Frank Robbe.
 
 **Fundamental to this architecture is that each hub is free to choose the internal implementation.** The terms Intrahub
 and Interhub communication are often used. Using that wording, Intrahub communication is outside the scope of this
