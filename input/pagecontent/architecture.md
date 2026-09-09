@@ -72,7 +72,6 @@ Although a system operated by an end user may (essentially) use the Interhub pro
 will not be considered interhub communication. The term interhub communication is reserved for the communication between the
 accredited eHealth Hubs, the metahub, and the future Belgian National Contact Point for eHealth (NCPeH) of th EHDS.
 
-Ik heb onderstaande proberen verwerken in de vorige paragrafen:
 
 <strike>
 * **Intrahub (OUT OF SCOPE)**:
@@ -90,8 +89,6 @@ Ik heb onderstaande proberen verwerken in de vorige paragrafen:
   * 
 ### 1.3 Key Actors & Nodes in the Network
 
-Ik moet de tekening nog beter bekijken. De pijlen komen mogelijk verwarrend over, want wat stellen die uberhaupt voor?
-Het gaatr blijkbaar niet om de richting van de communicatie.
 
 ```mermaid
 flowchart TD
@@ -126,7 +123,7 @@ flowchart TD
    * Acts as a central directory indicating which regional hubs may have information about a particular patient (identified by national **SSIN / INSS**).
    * Holds the national registers of informed consent (IC) and most of the therapeutic links (such as the TR derived from the status
      of holder of the Global Medical Record - other TRs, notibly those with specialist, are managed internally within the hub as
-     sensitive personal medical information can be derived from them). These registers are consulted by the **initiating hub** [waarom bold] when it performs its own access control, before it emits an Interhub request.
+     sensitive personal medical information can be derived from them). These registers are consulted by the **initiating hub** when it performs its own access control, before it emits an Interhub request.
 2. **eHealth Hubs**:
    * The primary hubs (or care networks) are **CoZo** (Collaboratief Zorgplatform), **RSW** (Réseau Santé Wallon),
      **BHN** (Brussels Health Network), and **ZODAP** (ZOrg DAta Platform). For the purpose of this text, the eHealth vaults of
@@ -134,10 +131,8 @@ flowchart TD
      FarmaFlux is a secondary hub - for want of a better term - that provides information collected by the community pharmacies (at the time of this
      writing excluding the pharmacies of the hospitals). No end users are directly connected to this hub: it provides these data
      to the 'primary' hubs.
-   * [Dit moet ik nog beter lezen en bekijken of de verwoording beter lijkt dan wat ik zelf eerder had voorgesteld. Dat van Vitalink vind
-     ik een vreemde verwoording, en dat van die outdated links lijkt me hier niet nodig. Resolving die links at run time dreigt als een rode lap te werken voor RSW.] **The list is not closed, and not every node behaves identically.** The federation also carries nodes that are not regional document registries in this sense — most notably a **patient-facing vault** (Vitalink), whose content is by definition accessible to the patient and whose request and response conventions differ from a classic hub. Hubs also merge and are renamed over time, and a hub that has cached a patient link to a decommissioned hub identifier must still resolve it. An Interhub implementation therefore MUST treat the hub list as configuration resolved from the Metahub at runtime, never as a constant compiled into the system, and MUST tolerate a patient link pointing at a hub identifier it does not recognise.
-   * [Ik vind het eerste deel van deze paragraaf vreemd verwoord, en de nadruk op index lijkt me gevaarlijk. Wat wil je zeggen? Wil je een vergelijking trekken met XDS? Het laatste deel is dan weer koet door de bocht, en hoort dat hier zo vluchtig te worden vermeld] 
-     Each hub acts as a regional Document Registry and Document Gateway, managing indexing and cross-hub routing. When a hub *initiates* a query, it is also the actor responsible for access control (see §5).
+     * **The list is not closed, and not every node behaves identically.** The federation also carries nodes that are not regional document registries in this sense — most notably a **patient-facing vault** (Vitalink), whose content is by definition accessible to the patient and whose request and response conventions differ from a classic hub. Hubs also merge and are renamed over time, and a hub that has cached a patient link to a decommissioned hub identifier must still resolve it. An Interhub implementation therefore MUST treat the hub list as configuration resolved from the Metahub at runtime, never as a constant compiled into the system, and MUST tolerate a patient link pointing at a hub identifier it does not recognise.
+* Each hub acts as a regional Document Registry and Document Gateway, managing indexing and cross-hub routing. When a hub *initiates* a query, it is also the actor responsible for access control (see §5).
 3. **Data Sources ~~Hub Sources (Connected Source Systems & Clinical Repositories)~~** [Ik begrijp niet waarom zo'n indrukwekkende termen worden gebruikt. Er is wellicht een goede reden toe, maar ik begin dat over allerlei grootste zaken na te denken en dat is misschien niet nodig]:
    * [Het is me eigenlijk niet duidelijk waarom je het hierover hebt. Ik doe een gok.] For the purpose of this text, these are the source systems, in the technical sense [??] that share medical data such as medical reports, laboratory results, images or other technical results, results from telemonitoring...
      Within the context of this text it is irrelevant whether the technical system in which the data resides is maintained by the organization or actor that generated the information:
