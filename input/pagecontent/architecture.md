@@ -60,7 +60,7 @@ guide, as it need not (and must not) be standardized. With greater nuance:
   Such connections can be established using the proprietary facilities provided by a particular hub. However, for practical
   or commercial reasons it is often preferred to retrieve information using a protocol that is independent of the hub. Therefore,
   all (most?) hubs enable such retrieval using (a slight variant of) the Interhub protocol. The use of this protocol is a deliberate
-  choice. The central patient portal mijngezondheid.be / masante.belgique.be retrieves data from the different hubs using that
+  choice. The central patient portal [mijngezondheid.be](https://www.mijngezondheid.belgie.be/) / [masante.belgique.be](https://www.masante.belgique.be/) retrieves data from the different hubs using that
   common protocol. Differences between the communication between the hubs and this standard communication with the system of the end user
   are related to authentication and authorization.
 * Similarly, the way in which the end user's computer systems of the previous bullets can be used enable that user
@@ -69,7 +69,7 @@ guide, as it need not (and must not) be standardized. With greater nuance:
 
 Although a system operated by an end user may (essentially) use the Interhub protocol, communication between that system and this hub
 will not be considered interhub communication. The term interhub communication is reserved for the communication between the
-accredited eHealth Hubs, the metahub, and the future Belgian National Contact Point for eHealth (NCPeH) of th EHDS.
+accredited eHealth Hubs, the metahub, and the future Belgian National Contact Point for eHealth (NCPeH) of the EHDS.
 
 
 <strike>
