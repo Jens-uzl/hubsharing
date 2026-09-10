@@ -85,6 +85,22 @@ we should be able to give multiple codes using diffrent codeSystems to a documen
 
 [_] Key Domain Coverage: "what about the other document, the old KMEHR documents, this is also a part that we need to cover in this section"
 
+[x] The CapabilityStatements contradicted the POST-everywhere mandate: both the responder and
+    the consumer declared `interaction = #read` on DocumentReference and a second
+    `rest.resource` for Bundle whose only interaction was `#read`. transactions.md §2.2 and
+    §3.2 say the opposite — a GET read puts the document identifier in the URL, which is
+    exactly what `$retrieve-document` exists to avoid — so a conformant responder would have
+    had to advertise an interaction the prose forbids its consumers from using.
+    FIXED: both statements now declare the search plus the operation and nothing else, with the
+    read-only, two-transaction surface stated in `rest.documentation`. The responder also gained
+    the `searchtype`, `_count` and `_sort` search parameters that transactions.md §2.2 already
+    documented but the conformance resource omitted, and `supportedProfile` for the Minimal
+    DocumentReference. The reference simulator enforces the same boundary at runtime: any other
+    path answers 404 with `issue.code = not-supported`.
+    NOTE: this narrows what a conformant responder may advertise. If a hub genuinely needs to
+    expose a FHIR read for intrahub or backend use, that belongs in a separate intrahub
+    CapabilityStatement, not in the Interhub one.
+
 [ ] DocumentReference.identifier slicing cannot be evaluated: identifier is sliced on `system`
     (#value), but the localId slice cannot fix a system (local systems are arbitrary), so the
     validator errors on every identifier of every DocumentReference example:
