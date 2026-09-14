@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Context
 
-The Belgian federated hub ecosystem (connecting regional hubs **CoZo**, **RSW**, **BHN**, and **Zodap** via the national **Metahub**) is modernizing its communication interfaces from legacy SOAP/KMEHR Web Services to RESTful HL7® FHIR®.
+The Belgian federated hub ecosystem (connecting regional hubs **CoZo**, **RSW**, **Abrumet+**, and **Zodap** via the national **Metahub**) is modernizing its communication interfaces from legacy SOAP/KMEHR Web Services to RESTful HL7® FHIR®.
 
 To guarantee global interoperability, cross-border compatibility with the **European Health Data Space (EHDS)**, and seamless bridging to existing **IHE XDS.b / XCA** document registries, Belgian Interhub metadata discovery is explicitly based on the **IHE MHD (Mobile access to Health Documents)** specification family.
 
@@ -60,7 +60,7 @@ In the Belgian federated health ecosystem, document discovery (`getTransactionLi
 In a centralized repository, referencing external resources (`Practitioner/123`, `Organization/456`) is standard practice. However, in a **federated, multi-hub ecosystem**, the UnContained pattern creates severe architectural and operational hurdles:
 
 1. **The N+1 Network Query Problem**:
-   If a `getTransactionList` search returns 50 document entries, and each entry points to external Practitioner, Organization, and Patient endpoints across separate regional hubs (CoZo, RSW, BHN), the initiating hub would need to execute up to **150+ additional HTTP GET requests** across regional gateways just to assemble and render the search result with physician names and hospital identifiers.
+   If a `getTransactionList` search returns 50 document entries, and each entry points to external Practitioner, Organization, and Patient endpoints across separate regional hubs (CoZo, RSW, Abrumet+), the initiating hub would need to execute up to **150+ additional HTTP GET requests** across regional gateways just to assemble and render the search result with physician names and hospital identifiers.
 2. **Cross-Hub Gateway Authentication Overhead**:
    Dereferencing external endpoints across different hubs requires establishing authenticated, token-bearing sessions with multiple distinct regional security gateways, dramatically increasing failure rates and latency.
 3. **Resolution of the Federal `BeDocumentReference` `author 1..1` Constraint**:

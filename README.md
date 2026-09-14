@@ -20,7 +20,7 @@ The generated FHIR artifacts and sample resources from this IG directly seed the
 
 ## 2. Core Architectural Principles
 
-1. **Strict Interhub Boundary**: Normatively and exclusively specifies federated **Hub-to-Hub** exchange between Belgian eHealth Hubs (CoZo, RSW, BHN, Zodap) and cross-border gateways. Intrahub connections between clinical EHR/LIS systems and their local Hub remain out of scope.
+1. **Strict Interhub Boundary**: Normatively and exclusively specifies federated **Hub-to-Hub** exchange between Belgian eHealth Hubs (CoZo, RSW, Abrumet+, Zodap) and cross-border gateways. Intrahub connections between clinical EHR/LIS systems and their local Hub remain out of scope.
 2. **Document-Centric Structure**: All shared clinical payloads are strictly exchanged as FHIR Bundles of type `document` (`Bundle.type = #document`), rooted in a `Composition` with all referenced resources included directly within the bundle.
 3. **No Cross-Hub Dereferencing (No N+1 Queries)**: All authoring parties, custodians, and patient demographic snapshots are provided as **contained resources** (`DocumentReference.contained`). Cross-document relationships (`relatesTo.target`) use **logical references** by business identifier, eliminating cross-hub cascading queries.
 4. **Open Coding Slices on `system`**: Document category and type elements mandate the national `cd-transaction` code system, but open slicing allows local hospital codings and multilingual descriptions to travel without being stripped by relaying hubs.

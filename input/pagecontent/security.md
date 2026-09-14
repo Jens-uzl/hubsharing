@@ -85,7 +85,7 @@ flowchart TD
 
 ### 2.1 Route 1: Hub/Enterprise-Issued JWT Bearer Tokens (Federated Trust)
 
-Here the eHealth hubs themselves — CoZo, RSW, BHN, Zodap — or major healthcare enterprises operate their own **OAuth 2.0 token issuers**. Trust between them is established bilaterally, or through a national hub federation trust registry. The token asserts the identity of the calling hub and carries the contextual claims needed for the responding hub's audit trail; it does not convey an access decision, which the initiating hub has already made locally.
+Here the eHealth hubs themselves — CoZo, RSW, Abrumet+, Zodap — or major healthcare enterprises operate their own **OAuth 2.0 token issuers**. Trust between them is established bilaterally, or through a national hub federation trust registry. The token asserts the identity of the calling hub and carries the contextual claims needed for the responding hub's audit trail; it does not convey an access decision, which the initiating hub has already made locally.
 
 #### Mechanics & Workflow:
 1. The initiating client authenticates against its local Hub Authorization Server using the **OAuth 2.0 Client Credentials Flow** with asymmetric private key JWT authentication (`private_key_jwt`).
@@ -98,7 +98,7 @@ Here the eHealth hubs themselves — CoZo, RSW, BHN, Zodap — or major healthca
 {
   "iss": "https://auth.cozo.be",
   "sub": "client-source-uzl",
-  "aud": "https://hub.bhn.be/fhir",
+  "aud": "https://hub.abrumet.be/fhir",
   "exp": 1773766800,
   "nbf": 1773763200,
   "iat": 1773763200,
@@ -213,7 +213,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 &client_id=initiating-hub-cozo
 &subject_token=PHNhbWwycDpBc3NlcnRpb24geG1sbnM6c2FtbDJwPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXNzZXJ0aW9uIi...
 &subject_token_type=urn:ietf:params:oauth:token-type:saml2
-&audience=https://hub.bhn.be/fhir
+&audience=https://hub.abrumet.be/fhir
 ```
 
 #### Response:
