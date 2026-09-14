@@ -53,7 +53,7 @@ pages:
   envelope-and-metadata.md:
     title: Envelope & Metadata Specification
   transactions.md:
-    title: Interhub Transactions (getTransactionList & getTransaction)
+    title: Interhub Transactions (Discovery, Retrieval & Lab Observations)
   security.md:
     title: Interhub Security & Authentication Architecture
   end-to-end-encryption.md:

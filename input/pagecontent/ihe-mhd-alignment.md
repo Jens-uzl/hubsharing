@@ -209,6 +209,17 @@ To prevent patient identifiers (such as Belgian SSINs) and query criteria from l
 
 ---
 
+### 4.8 Topic 8: Laboratory Results Beyond the Document (IHE QEDm & mXDE)
+
+#### Context & Discussion
+MHD shares whole documents. For trend follow-up of individual lab results (DIGIRELAB), IHE offers two companion profiles, and the Interhub reuses both in their simplest form:
+1. **[IHE QEDm](https://profiles.ihe.net/PCC/QEDm/) PCC-44** is the query for individual `Observation` resources by patient, code and date. The Interhub laboratory observation search is PCC-44 over HTTP POST, with the patient identified by SSIN.
+2. **[IHE mXDE](https://profiles.ihe.net/ITI/mXDE/)** traces each extracted data element back to its source document, using a separate `Provenance` resource. The Interhub carries that same link inline on the Observation (`derivedFrom` = document uniqueId, `homeCommunityId` = hub holding the document), so no Provenance resource or additional endpoint is needed.
+
+All references in the returned Observation are logical references by business identifier (SSIN, NIHDI, CBE, document uniqueId). This is the same principle as contained resources in MHD Comprehensive: nothing needs to be dereferenced across hubs. See [Transactions §4.8](transactions.html#48-relationship-to-ihe-qedm-and-ihe-mxde) for the element-by-element mapping.
+
+---
+
 ## 5. Summary Conformance Matrix
 
 | Metadata Field | IHE MHD Comprehensive Profile | Belgian Interhub Specification | Legacy KMEHR Source |

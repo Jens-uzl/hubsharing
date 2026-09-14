@@ -24,9 +24,11 @@ The generated FHIR artifacts and sample resources from this IG directly seed the
 2. **Document-Centric Structure**: All shared clinical payloads are strictly exchanged as FHIR Bundles of type `document` (`Bundle.type = #document`), rooted in a `Composition` with all referenced resources included directly within the bundle.
 3. **No Cross-Hub Dereferencing (No N+1 Queries)**: All authoring parties, custodians, and patient demographic snapshots are provided as **contained resources** (`DocumentReference.contained`). Cross-document relationships (`relatesTo.target`) use **logical references** by business identifier, eliminating cross-hub cascading queries.
 4. **Open Coding Slices on `system`**: Document category and type elements mandate the national `cd-transaction` code system, but open slicing allows local hospital codings and multilingual descriptions to travel without being stripped by relaying hubs.
-5. **The Two Core Transactions**:
+5. **The Three Interhub Transactions**:
    - **`getTransactionList` ↔ MHD ITI-67 (`Find DocumentReferences`)**: Query metadata summaries by patient SSIN, category, LOINC type, date range, and author. POST is mandated to prevent SSIN logging.
    - **`getTransaction` ↔ MHD ITI-68 (`Retrieve Document`) & `$retrieve-document`**: Resolves a document reference to an immutable FHIR Document Bundle or raw PDF stream via content negotiation (`Accept: application/pdf`).
+   - **Laboratory Observation Search (DIGIRELAB) ↔ IHE QEDm PCC-44**: `POST [base]/Observation/_search` by patient SSIN and LOINC code, federated across hubs. Each result links to its source report via `derivedFrom` (the inline equivalent of IHE mXDE Provenance).
+6. **No Extra Endpoints, Logical References**: A responding hub serves only `DocumentReference` (search, `$retrieve-document`) and `Observation` (search). Patients, practitioners, organisations and source documents are referenced by business identifier (`Reference.identifier`: SSIN, NIHDI, CBE, document uniqueId), never by resolvable URL.
 
 ---
 
@@ -42,6 +44,7 @@ The generated FHIR artifacts and sample resources from this IG directly seed the
 | **`BeInterhubLabComposition`** | `Composition` | Root composition profile for Belgian laboratory reports (LOINC `11502-2`), aligned with HL7 Belgium `BeLaboratoryReport` and EHDS `Composition-eu-lab`. |
 | **`BeTelemonitoringComposition`** | `Composition` | Root composition profile for remote patient telemonitoring sessions and Holter studies. |
 | **`TelemonitoringDiagnosticReport`** | `DiagnosticReport` | Diagnostic report profile carrying telemonitoring session and carepath metadata. |
+| **`BeInterhubLabObservation`** | `Observation` | Laboratory result returned by the lab observation search. Logical references only (subject by SSIN, performer by NIHDI/CBE, `derivedFrom` by source document uniqueId) plus mandatory `homeCommunityId` for routing `$retrieve-document`. |
 
 ### Belgian Extensions (`input/fsh/be-interhub-extensions.fsh`)
 
@@ -53,13 +56,14 @@ The generated FHIR artifacts and sample resources from this IG directly seed the
 | **`BeExtRecordDateTime`** | `.../StructureDefinition/be-ext-record-date-time` | Timestamp when recorded in the hub source system. |
 | **`BeExtHcPartyType`** | `.../StructureDefinition/be-ext-hcparty-type` | Carries KMEHR `CD-HCPARTY` code inline on author, authenticator, and custodian. |
 
-### CapabilityStatements & Operations
+### CapabilityStatements, Operations & SearchParameters
 
 | Artifact Name | Type | Description |
 | :--- | :--- | :--- |
-| **`BeInterhubDocumentResponder`** | `CapabilityStatement` | Normative server requirements for responding eHealth Hubs and repositories. |
+| **`BeInterhubDocumentResponder`** | `CapabilityStatement` | Normative server requirements for responding eHealth Hubs, repositories, and DIGIRELAB vaults. |
 | **`BeInterhubDocumentConsumer`** | `CapabilityStatement` | Client requirements for initiating eHealth Hubs in federated communication. |
 | **`BeRetrieveDocument`** | `OperationDefinition` | Belgian `$retrieve-document` extended operation definition for ITI-68 document retrieval. |
+| **`InterhubSearchType`** | `SearchParameter` | SearchParameter `searchtype` for federation scope (`federated` vs `local`) on DocumentReference and Observation. |
 
 ---
 

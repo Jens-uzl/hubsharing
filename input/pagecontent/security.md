@@ -401,13 +401,13 @@ Under the Patient Rights Act and the eHealth Platform Law, every access, search 
 
 Because the responding hub trusts the calling hub, the audit trail on both sides is what makes an Interhub exchange reconstructable after the fact: the initiating hub logs the access decision it made and the identity of the end user it made it for, and the responding hub logs which hub asked for what.
 
-In the FHIR Interhub standard, auditing is standardized using **IHE BALP (Basic Audit Logging Pattern)** and **IHE ATNA** generating FHIR **`AuditEvent`** resources. The `subtype` values below (`ITI-67`, `ITI-68`) refer to the two transactions specified in [Transactions](transactions.html), and the document identifiers logged as entities come from the envelope specified in [Envelope & Metadata](envelope-and-metadata.html):
+In the FHIR Interhub standard, auditing is standardized using **IHE BALP (Basic Audit Logging Pattern)** and **IHE ATNA** generating FHIR **`AuditEvent`** resources. The `subtype` values below (`ITI-67`, `ITI-68`, and `PCC-44` for the laboratory observation search, which is based on IHE QEDm) refer to the three transactions specified in [Transactions](transactions.html). The query parameters of a `PCC-44` search (patient SSIN and LOINC codes) are recorded in the query entity exactly as for `ITI-67`, and the document identifiers logged as entities come from the envelope specified in [Envelope & Metadata](envelope-and-metadata.html):
 
 ```mermaid
 classDiagram
     class AuditEvent {
         +type: DCM #110112 ("Query") / #110106 ("Export")
-        +subtype: ITI-67 ("FindDocumentReferences") / ITI-68 ("RetrieveDocument")
+        +subtype: ITI-67 ("FindDocumentReferences") / ITI-68 ("RetrieveDocument") / PCC-44 ("MobileQueryExistingData")
         +action: "E" (Execute) / "R" (Read)
         +recorded: 2026-03-15T10:30:05Z (instant)
         +outcome: "0" (Success) / "4" (Minor failure)
