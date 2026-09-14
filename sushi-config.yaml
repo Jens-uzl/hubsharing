@@ -83,6 +83,7 @@ menu:
   Specification:
     Envelope & Metadata: envelope-and-metadata.html
     Transactions: transactions.html
+    Laboratory Observation Search: transactions.html#lab-observation-search
     Security & Authentication: security.html
     End-to-End Encryption (Discussion): end-to-end-encryption.html
   Document Types:

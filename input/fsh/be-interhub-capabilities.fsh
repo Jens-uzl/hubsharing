@@ -5,7 +5,7 @@ Instance: BeInterhubDocumentResponder
 InstanceOf: CapabilityStatement
 Usage: #definition
 Title: "Belgian Interhub Document Responder Capability Statement"
-Description: "Defines the mandatory capabilities for Belgian eHealth Hubs and repositories responding to Interhub metadata discovery (getTransactionList / MHD ITI-67), document retrieval (getTransaction / MHD ITI-68) and laboratory observation search requests via HTTP POST."
+Description: "Defines the mandatory capabilities for Belgian eHealth Hubs and repositories responding to Interhub metadata discovery (getTransactionList / MHD ITI-67), document retrieval (getTransaction / MHD ITI-68) and laboratory observation search requests via HTTP POST. See [Laboratory Observation Search](transactions.html#lab-observation-search) for the contract and [search parameters](transactions.html#lab-observation-search-parameters) for all supported query inputs."
 * status = #active
 * date = "2026-08-17"
 * kind = #requirements
@@ -90,7 +90,7 @@ Description: "Defines the mandatory capabilities for Belgian eHealth Hubs and re
 
 * rest.resource[1].searchParam[3].name = "date"
 * rest.resource[1].searchParam[3].type = #date
-* rest.resource[1].searchParam[3].documentation = "Filters observations by effectiveDateTime timestamp range (ge, le)."
+* rest.resource[1].searchParam[3].documentation = "Filters observations by effective[x] using ge, le, gt or lt prefixes; at most two date parameters define a range. See [the search parameter table](transactions.html#lab-observation-search-parameters)."
 
 * rest.resource[1].searchParam[4].name = "searchtype"
 * rest.resource[1].searchParam[4].type = #token
@@ -111,7 +111,7 @@ Instance: BeInterhubDocumentConsumer
 InstanceOf: CapabilityStatement
 Usage: #definition
 Title: "Belgian Interhub Document Consumer Capability Statement"
-Description: "Defines the mandatory capabilities for initiating Belgian eHealth Hubs (and cross-border NCPeH endpoints) querying and retrieving health documents from responding Belgian Hubs via Interhub using HTTP POST."
+Description: "Defines the mandatory capabilities for initiating Belgian eHealth Hubs (and cross-border NCPeH endpoints) discovering and retrieving health documents and searching laboratory observations from responding Belgian Hubs via Interhub using HTTP POST. See [Laboratory Observation Search](transactions.html#lab-observation-search) for the contract and [search parameters](transactions.html#lab-observation-search-parameters) for all supported query inputs."
 * status = #active
 * date = "2026-08-17"
 * kind = #requirements
