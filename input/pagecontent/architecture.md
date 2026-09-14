@@ -1,4 +1,3 @@
-# Belgian Interhub Architecture & Federation Model
 
 > **Where this page sits in the guide** — *Architecture*, page 1 of 2.
 > This page is the **map** of the ecosystem; the pages it names are the specification of the individual pieces.
