@@ -1,5 +1,3 @@
-# Belgian Interhub FHIR Document Sharing Implementation Guide
-
 ## Executive Summary & Context
 
 During the last 15 years, medical information has been exchanged in the national project of the eHealth hubs and vaults using XML messages according to the Belgian **KMEHR** standard.
