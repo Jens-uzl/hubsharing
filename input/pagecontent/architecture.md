@@ -7,9 +7,9 @@
 > * **Next:** [Design Rationale](resource-considerations.html) — why this architecture shares FHIR *documents* rather than messages or granular resources.
 
 <a name="1-the-belgian-federated-health-ecosystem"></a>
-## 1. The Belgian Federated eHealth Ecosystem
+### The Belgian Federated eHealth Ecosystem
 
-### 1.1 Hubs and vaults, the latter mentioned in this section only
+#### Hubs and vaults, the latter mentioned in this section only
 
 Healthcare organizations or individual care providers may make their data available to authorized actors either by making these data accessible from their computer systems, or by uploading a copy of the data onto a central location.
 In very simplistic terms, the former approach is the one used with the system of the eHealth hubs, while the latter is used with the healthcare 'vaults'.
@@ -20,7 +20,7 @@ With a vault the data are always managed locally.
 For this document, except in the introductory section, the difference between a hub and a vault is irrelevant.
 For simplicity and conciseness, this text talks about 'hubs', but vaults or any future system in-between is included as well.
 
-### 1.2 Intrahub versus interhub communication
+#### Intrahub versus interhub communication
 
 For the Belgian eHealth system, the choice was made to not centralize completely.
 A first motivation was a matter of principle, that the government should not have excessive control over health data or be able to readily access it.
@@ -58,7 +58,7 @@ With greater nuance:
 Although a system operated by an end user may (essentially) use the Interhub protocol, communication between that system and this hub will not be considered interhub communication.
 The term interhub communication is reserved for the communication between the accredited eHealth Hubs, the metahub, and the future Belgian National Contact Point for eHealth (NCPeH) of the EHDS.
 
-### 1.3 Key Actors & Nodes in the Network
+#### Key Actors & Nodes in the Network
 
 The network consists of three functional layers:
 
@@ -129,7 +129,7 @@ flowchart TD
 
 ---
 
-## 2. Evolution: From SOAP KMEHR to RESTful FHIR MHD
+### Evolution: From SOAP KMEHR to RESTful FHIR MHD
 
 Historically, Interhub communication was specified using SOAP Web Services exchanging XML payloads conforming to Belgian **KMEHR** schemas (`getTransactionList`, `getTransaction`, `putTransaction`, `getTransactionAccessList`).
 
@@ -181,14 +181,14 @@ Each layer of the Interhub specification is detailed on its own page: the **meta
 
 ---
 
-## 3. Cross-Hub Routing & Identifiers
+### Cross-Hub Routing & Identifiers
 
 In a cross-hub exchange — which in the current scope consists of federated information retrieval — an **initiating hub** queries for available records (metadata discovery) or fetches a complete document bundle (document retrieval) from a **responding hub**.
 The initiating hub performs upstream access control and identity validation, which the responding hub relies upon while enforcing local data filtering, technical verification, and audit policies (see §5).
 
 Federated routing and entity resolution across the network rely on a set of standardized identifiers registered in the Belgian eHealth OID tree (`1.3.6.1.4.1.21297`) and official URI namespaces:
 
-### 3.1 Belgian National Identifiers
+#### Belgian National Identifiers
 
 | Concept | URI / System | OID Root | Description & Syntax Example |
 | :--- | :--- | :--- | :--- |
@@ -208,7 +208,7 @@ These identifiers are bound to concrete `BeInterhubDocumentReference` elements i
 > This IG therefore requires that every hub OID be registered against the hub's EHP number, that a responding hub be able to answer routing on either, and that `extension[homeCommunityId]` accept both forms ([Envelope & Metadata §3.1](envelope-and-metadata.html#31-home-community-id-beexthomecommunityid)).
 > Publishing an OID that cannot be resolved back to an EHP number would make a `DocumentReference` unroutable by every hub in service today.
 
-### 3.2 Routing Mechanics via `homeCommunityId`
+#### Routing Mechanics via `homeCommunityId`
 
 1. **Discovery (`getTransactionList` / ITI-67)**:
    * The initiating hub resolves the patient links (consulted from the Metahub registry, either via live query or local synchronized cache) and queries each relevant eHealth Hub for available document references.
@@ -221,7 +221,7 @@ The query syntax for step 1 and the retrieval call for step 2 are specified in [
 ---
 
 <a name="4-dual-stack-gateway-architecture-transition-phase"></a>
-## 4. Dual-Stack Gateway Architecture during the Transition Phase
+### Dual-Stack Gateway Architecture during the Transition Phase
 
 The hubs do not consider temporarily suspending their societal role while their architecture is upgraded.
 Besides, some KMEHR connectors in clinical production systems are expected to outlive this version of the specification.
@@ -235,13 +235,13 @@ The element-by-element mapping and transformation rules the gateway applies in b
 ---
 
 <a name="5-trust-model-security-architecture--connection-routes-proposal"></a>
-## 5. Trust Model, Security Architecture & Connection Routes (Proposal)
+### Trust Model, Security Architecture & Connection Routes (Proposal)
 
 > **This section is a summary.**
 > The normative security specification — the three routes in full, DPoP / RFC 9421 tamper-proofing, the initiating/responding responsibility split, and IHE BALP auditing — is on the [Security & Authentication](security.html) page and takes precedence over the overview below.
 
 <a name="51-trust-model-the-initiating-hub-owns-access-control"></a>
-### 5.1 Trust Model Between Initiating and Responding Hubs
+#### Trust Model Between Initiating and Responding Hubs
 
 This section outlines the operational rules and trust model agreed among the federated hubs (with the understanding that specific vault implementations, such as Vitalink, may tailor certain access rules to their patient-facing mandate).
 
@@ -264,7 +264,7 @@ Every clinical query is triggered by an authorized practitioner or patient inter
   * The responding hub performs technical validation on incoming requests, including mutual TLS authentication of the initiating hub, cryptographic signature / tamper-proofing verification, replay prevention, and query syntax validation.
   * The responding hub records the inbound transaction in its local audit trail (recording calling hub identity, asserted practitioner claims, and delivered document identifiers).
 
-### 5.2 Federated Authentication Routes (Proposal)
+#### Federated Authentication Routes (Proposal)
 
 Three distinct connection routes are on the table for authenticating the calling hub.
 
@@ -296,9 +296,8 @@ For complete technical specifications, see **[Security & Authentication](securit
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Next:** [Design Rationale](resource-considerations.html) — why Interhub shares `Bundle.type = #document` payloads discovered through a `DocumentReference` envelope.
 * **Then, in order:** [Envelope & Metadata](envelope-and-metadata.html) → [Transactions](transactions.html) → [Security & Authentication](security.html) → [End-to-End Encryption](end-to-end-encryption.html).
 * **Related:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html) for the dual-stack gateway crosswalk (§4 above), [EHDS Alignment](ehds-alignment.html) for how this federation is presented to MyHealth@EU.
-

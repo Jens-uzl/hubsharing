@@ -1,5 +1,3 @@
-# IHE MHD Alignment & Federated Architecture Options
-
 > **Where this page sits in the guide** — *Migration & Alignment*, page 2 of 3. This page provides the **in-depth architectural analysis, profile selection rationale, and open working group discussions** regarding the alignment of Belgian Interhub with **IHE MHD (Mobile access to Health Documents)**.
 >
 > * **Owned by this page:** Comparison between IHE MHD Minimal vs Comprehensive vs UnContained vs Contained profiles, the N+1 network latency rationale, resolution of the federal `author 1..1` cap, and open discussion topics to be resolved by the national technical committee.
@@ -8,7 +6,7 @@
 
 ---
 
-## 1. Executive Summary & Context
+### Executive Summary & Context
 
 The Belgian federated hub ecosystem (connecting regional hubs **CoZo**, **RSW**, **Abrumet+**, and **Zodap** via the national **Metahub**) is modernizing its communication interfaces from legacy SOAP/KMEHR Web Services to RESTful HL7® FHIR®.
 
@@ -43,7 +41,7 @@ flowchart TD
 
 ---
 
-## 2. Analysis of IHE MHD Profile Families
+### Analysis of IHE MHD Profile Families
 
 IHE MHD defines several variants of `DocumentReference` to cater to different operational environments. The table below details the evaluation of these options for the Belgian Interhub network:
 
@@ -53,10 +51,10 @@ IHE MHD defines several variants of `DocumentReference` to cater to different op
 | **IHE MHD Comprehensive (UnContained)** (`IHE.MHD.UnContained.Comprehensive.DocumentReference`) | Strictly constrained; mandates all XDS-equivalent attributes; uses **external URL references** (`Reference(Practitioner)`) for authors and patient demographics. | **Sub-optimal**: Forces initiating hubs and gateways into high network latency due to the **N+1 query problem** across federated regional gateways. | **Rejected** |
 | **IHE MHD Comprehensive (Contained)** (`IHE.MHD.Comprehensive.DocumentReference`) | Strictly constrained; mandates XDS metadata; mandates **contained resources** (`#contained-id`) for `author`, `authenticator`, and `context.sourcePatientInfo`. | **Optimal**: Solves multi-author attribution, eliminates secondary network lookups, captures demographic snapshots, and complies fully with IHE and EHDS. | **SELECTED (Mandated)** |
 
-### 2.1 Why MHD Minimal Was Insufficient
+#### Why MHD Minimal Was Insufficient
 In the Belgian federated health ecosystem, document discovery (`getTransactionList`) is heavily reliant on structured metadata filters. The Minimal profile leaves `category`, `type`, `facilityType`, and `practiceSetting` optional, which would prevent initiating gateways from performing reliable clinical queries (e.g. finding all cardiology telemonitoring reports or clinical biology lab results). Furthermore, Minimal lacks mandatory document creation timestamps and confidentiality labels (`securityLabel`), which are legally mandatory under Belgian healthcare legislation.
 
-### 2.2 Why Contained Resources Are Mandated over UnContained
+#### Why Contained Resources Are Mandated over UnContained
 In a centralized repository, referencing external resources (`Practitioner/123`, `Organization/456`) is standard practice. However, in a **federated, multi-hub ecosystem**, the UnContained pattern creates severe architectural and operational hurdles:
 
 1. **The N+1 Network Query Problem**:
@@ -70,22 +68,22 @@ In a centralized repository, referencing external resources (`Practitioner/123`,
 
 ---
 
-## 3. Key Technical Directives & Conformance Rules
+### Key Technical Directives & Conformance Rules
 
 To ensure strict compliance with `IHE.MHD.Comprehensive.DocumentReference`, the following technical rules are enforced across all Belgian Interhub implementations:
 
-### 3.1 Mandatory Document Unique Identifier (`masterIdentifier`)
+#### Mandatory Document Unique Identifier (`masterIdentifier`)
 * `masterIdentifier` is **`1..1 MS`** and MUST be formatted as an RFC 3986 URI (e.g. `urn:oid:...` or `urn:uuid:...`).
 * For legacy KMEHR transactions lacking a global UUID, the responding hub mints this URI idempotently from the tuple: *(hub EHP number, local ID, `@SL` scheme)*.
 * `identifier[uniqueId]` mirrors `masterIdentifier`.
 * `identifier[entryUUID]` (`0..1 MS`) carries the metadata entry UUID (`urn:uuid:...`).
 * `identifier[localId]` (`0..* MS`) carries the source hospital/laboratory identifier with its `@SL` scheme.
 
-### 3.2 Removal of Prohibited Elements (`docStatus` and `attachment.data`)
+#### Removal of Prohibited Elements (`docStatus` and `attachment.data`)
 * **`docStatus` is `0..0` (Forbidden)**: In conformance with IHE MHD, `docStatus` is removed. Document clinical lifecycle and amendments are expressed through Composition status and FHIR document relationships (`relatesTo` with `#replaces`, `#transforms`, `#appends`).
 * **`content.attachment.data` is `0..0` (Forbidden)**: Discovery metadata returned by `getTransactionList` (MHD ITI-67) NEVER carries inline Base64 payload data. Payloads are retrieved strictly out-of-band via `content.attachment.url` using MHD ITI-68.
 
-### 3.3 Mandatory Comprehensive Classifications
+#### Mandatory Comprehensive Classifications
 * **`category` (`1..1 MS`)**: Bound to Belgian `CD-TRANSACTION` (`sumehr`, `labresult`, `discharge`, `telemonitoring`, etc.).
 * **`type` (`1..1 MS`)**: Bound to LOINC document classification codes.
 * **`securityLabel` (`1..* MS`)**: Mandatory confidentiality code (`V3-Confidentiality`: `N`, `R`, `V`).
@@ -96,7 +94,7 @@ To ensure strict compliance with `IHE.MHD.Comprehensive.DocumentReference`, the 
 
 ---
 
-## 4. Open Working Group Discussions & Architectural Options
+### Open Working Group Discussions & Architectural Options
 
 This section documents open architectural choices, trade-offs, and design proposals currently under consideration by the Belgian Interhub Technical Committee.
 
@@ -115,12 +113,12 @@ This section documents open architectural choices, trade-offs, and design propos
 
 ---
 
-### 4.1 Topic 1: Harmonization with `hl7.fhir.be.core` (`BeDocumentReference`)
+#### Topic 1: Harmonization with `hl7.fhir.be.core` (`BeDocumentReference`)
 
-#### Current Problem
+##### Current Problem
 The federal profile `BeDocumentReference` caps `author` at `1..1` and derives from the HL7 FHIR base `DocumentReference`. Because FHIR profiling rules permit only narrowing cardinality, `BeInterhubDocumentReference` cannot derive from `BeDocumentReference` without restricting the Belgian multi-author chain.
 
-#### Proposed Resolution Options
+##### Proposed Resolution Options
 * **Option A (Recommended)**: Submit a formal Change Request to the HL7 Belgium Core WG to relax `BeDocumentReference.author` to `1..*` and incorporate IHE MHD Comprehensive alignment at the federal level.
 * **Option B**: Maintain `BeInterhubDocumentReference` as an independent national interhub profile inheriting directly from `IHE.MHD.Comprehensive.DocumentReference`.
 * **Option C**: Create a federal specialization `BeInterhubDocumentReference` that satisfies `BeDocumentReference` whenever a single author is present, but documents the extension for multi-hub exchanges.
@@ -129,12 +127,12 @@ The federal profile `BeDocumentReference` caps `author` at `1..1` and derives fr
 
 ---
 
-### 4.2 Topic 2: Contained Demographics Snapshot vs. Master Patient Index (MPI)
+#### Topic 2: Contained Demographics Snapshot vs. Master Patient Index (MPI)
 
-#### Context & Discussion
+##### Context & Discussion
 `context.sourcePatientInfo` mandates an embedded `#contained` `BePatient` capturing the patient demographics at the time of document publication.
 
-#### Trade-Off Analysis
+##### Trade-Off Analysis
 * **Advantages of Contained Snapshot**:
   * Guarantees legal non-repudiation: proves what the publishing clinician saw at the time of authoring.
   * Zero network dependencies: client does not need to query Metahub / RN / INSZ lookup services during document discovery.
@@ -144,12 +142,12 @@ The federal profile `BeDocumentReference` caps `author` at `1..1` and derives fr
 
 ---
 
-### 4.3 Topic 3: Multi-Author Attribution Typing: Inline Extension vs. Native Roles
+#### Topic 3: Multi-Author Attribution Typing: Inline Extension vs. Native Roles
 
-#### Context & Discussion
+##### Context & Discussion
 Legacy KMEHR transactions type each author using `CD-HCPARTY` (e.g. `hub`, `orghospital`, `persphysician`, `application`).
 
-#### Evaluation of Options
+##### Evaluation of Options
 * **Approach in this IG**: Uses `BeExtHcPartyType` directly on `author[].extension[hcPartyType]`, pointing to `#contained` `BePractitioner` or `BeOrganization` resources.
   * *Pros*: Extremely lightweight; instant inspection by client parsers without unpacking the contained resource structure.
 * **Alternative IHE Approach**: Populate `PractitionerRole.code` or `Organization.type` inside the contained resource.
@@ -159,12 +157,12 @@ Legacy KMEHR transactions type each author using `CD-HCPARTY` (e.g. `hub`, `orgh
 
 ---
 
-### 4.4 Topic 4: Document Deprecation, Replacement & Versioning Lifecycle
+#### Topic 4: Document Deprecation, Replacement & Versioning Lifecycle
 
-#### Context & Discussion
+##### Context & Discussion
 With `docStatus` set to `0..0`, legacy KMEHR `iscomplete="false"` (preliminary) and `iscomplete="true"` + `isvalidated="true"` (final) flags must be mapped cleanly into FHIR constructs.
 
-#### Lifecycle Pattern
+##### Lifecycle Pattern
 1. **Document Status (`DocumentReference.status`)**:
    * `current`: The active, valid version of the metadata record.
    * `superseded`: A replaced or obsolete version.
@@ -176,32 +174,32 @@ With `docStatus` set to `0..0`, legacy KMEHR `iscomplete="false"` (preliminary) 
 
 ---
 
-### 4.5 Topic 5: Search Response Optimization & Result Set Pagination
+#### Topic 5: Search Response Optimization & Result Set Pagination
 
-#### Discussion
+##### Discussion
 Because `IHE.MHD.Comprehensive.DocumentReference` embeds contained resources (`BePatient`, `BePractitioner`, `BeOrganization`), the byte size of each `DocumentReference` search entry increases from ~1.5 KB to ~4-6 KB.
 
-#### Recommended Hub Strategies
+##### Recommended Hub Strategies
 1. **Paging (`_count`)**: Responding hubs SHOULD enforce a default page size (e.g. `_count=50`, maximum `_count=200`) on `getTransactionList` queries.
 2. **Deduplication of Contained Resources**: Where multiple authors or patients share identical details across a single searchset entry, they reference a single contained instance.
 3. **Client-Side Caching**: Client applications cache retrieved Practitioner and Organization details keyed by NIHDI / CBE identifiers to speed up subsequent rendering.
 
 ---
 
-### 4.6 Topic 6: Future Publication Roadmap (`IHE MHD ITI-65 / Provide Document Bundle`)
+#### Topic 6: Future Publication Roadmap (`IHE MHD ITI-65 / Provide Document Bundle`)
 
-#### Context
+##### Context
 Currently, Belgian Interhub focuses on metadata discovery (`getTransactionList` / MHD ITI-67) and document retrieval (`getTransaction` / MHD ITI-68).
 
-#### Future Roadmap
+##### Future Roadmap
 * Future versions of this IG will specify **IHE MHD ITI-65 (`Provide Document Bundle`)** for publishing and sharing new documents from hospital EHRs and laboratory systems to/via regional hubs.
 * ITI-65 will utilize `IHE.MHD.Comprehensive.ProvideBundle` to submit the `BeInterhubDocumentBundle` alongside its `BeInterhubDocumentReference` metadata envelope in a single transaction.
 
 ---
 
-### 4.7 Topic 7: POST Search & FHIR `$retrieve-document` Operation Alignment with IHE MHD
+#### Topic 7: POST Search & FHIR `$retrieve-document` Operation Alignment with IHE MHD
 
-#### Context & Discussion
+##### Context & Discussion
 To prevent patient identifiers (such as Belgian SSINs) and query criteria from leaking into web server access logs, reverse proxies, and browser histories, Belgian Interhub mandates **HTTP POST everywhere** across consumer-to-hub interfaces:
 1. **Document Discovery**: Clients send `POST [base]/DocumentReference/_search` with `application/x-www-form-urlencoded` body content. This is natively conformant with **IHE MHD ITI-67**, which explicitly permits Document Consumers to use either GET or POST search.
 2. **Document Retrieval**: Because FHIR R4 defines standard `read` as an HTTP GET interaction, Belgian Interhub specifies a national FHIR operation: **`POST [base]/DocumentReference/$retrieve-document`**.
@@ -209,9 +207,9 @@ To prevent patient identifiers (such as Belgian SSINs) and query criteria from l
 
 ---
 
-### 4.8 Topic 8: Laboratory Results Beyond the Document (IHE QEDm & mXDE)
+#### Topic 8: Laboratory Results Beyond the Document (IHE QEDm & mXDE)
 
-#### Context & Discussion
+##### Context & Discussion
 MHD shares whole documents. For trend follow-up of individual lab results (DIGIRELAB), IHE offers two companion profiles, and the Interhub reuses both in their simplest form:
 1. **[IHE QEDm](https://profiles.ihe.net/PCC/QEDm/) PCC-44** is the query for individual `Observation` resources by patient, code and date. The Interhub laboratory observation search is PCC-44 over HTTP POST, with the patient identified by SSIN.
 2. **[IHE mXDE](https://profiles.ihe.net/ITI/mXDE/)** traces each extracted data element back to its source document, using a separate `Provenance` resource. The Interhub carries that same link inline on the Observation (`derivedFrom` = document uniqueId, `homeCommunityId` = hub holding the document), so no Provenance resource or additional endpoint is needed.
@@ -220,7 +218,7 @@ All references in the returned Observation are logical references by business id
 
 ---
 
-## 5. Summary Conformance Matrix
+### Summary Conformance Matrix
 
 | Metadata Field | IHE MHD Comprehensive Profile | Belgian Interhub Specification | Legacy KMEHR Source |
 | :--- | :--- | :--- | :--- |
@@ -245,7 +243,7 @@ All references in the returned Observation are logical references by business id
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html) — field-by-field legacy crosswalk.
 * **Next:** [EHDS Alignment](ehds-alignment.html) — alignment with European cross-border profiles.

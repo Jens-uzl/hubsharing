@@ -1,12 +1,10 @@
-# Interhub Transactions: getTransactionList, getTransaction & Lab Observation Search
-
 > **Where this page sits in the guide** — *Specification*, page 2 of 4. This page is the **wire-level contract**: URLs, parameters, status codes and response shapes.
 >
 > * **Owned by this page:** `getTransactionList` (ITI-67), `getTransaction` (ITI-68), the laboratory observation search, partial-failure `OperationOutcome` handling, and the error-code crosswalk.
 > * **Not covered here:** the fields of the `DocumentReference` returned by ITI-67 → [Envelope & Metadata](envelope-and-metadata.html); how the calling hub is authenticated and the request is tamper-proofed → [Security & Authentication](security.html); what a real payload looks like per domain → [Laboratory Reports](lab-report-sharing.html) and [Telemonitoring](mapping-telemonitoring-to-hub.html); why the payload is a document bundle at all → [Design Rationale](resource-considerations.html).
 > * **Previous:** [Envelope & Metadata](envelope-and-metadata.html) · **Next:** [Security & Authentication](security.html)
 
-## 1. Overview of Interhub Transactions
+### Overview of Interhub Transactions
 
 The Belgian federated hub architecture relies on three core interactions:
 1. **Document Discovery (`getTransactionList`)**: Enables an initiating hub to discover available clinical documents for a patient across all connected regional hubs.
@@ -70,14 +68,14 @@ sequenceDiagram
 
 ---
 
-## 2. Transaction 1: `getTransactionList` (MHD ITI-67 `Find DocumentReferences`)
+### Transaction 1: `getTransactionList` (MHD ITI-67 `Find DocumentReferences`)
 
-### 2.1 Trigger & Scope
+#### Trigger & Scope
 An **initiating hub** triggers this transaction across partner regional hubs to query for health documents available for a patient identified by their Belgian **SSIN / INSS** (following a local Intrahub request from a clinical application or user).
 
 The **initiating hub** performs its access control before emitting this transaction (e.g. by checking the Metahub for an informed consent / therapeutic link, or by consulting its own local database). The answering hub authenticates the calling hub, trusts it, and answers the query. This trust model is only summarised here; it is specified in full — together with the responsibility split between the two hubs — in [Security & Authentication §1.1](security.html#11-trust-model-access-control-is-the-initiating-hubs-responsibility).
 
-### 2.2 HTTP Interaction & Query Parameters (POST-Based Search)
+#### HTTP Interaction & Query Parameters (POST-Based Search)
 
 > **Architectural Privacy Rationale: POST Everywhere**: In HTTP GET requests, query parameters and URLs are routinely logged in plaintext by web servers, reverse proxies, API gateways, load balancers, SIEM systems, browser histories, and intermediary access logs (`access.log`). Placing sensitive patient identifiers (such as Belgian SSINs) or clinical search filters in URL query strings creates major data leakage risks. To enforce strict medical confidentiality and GDPR compliance, Belgian Interhub mandates **HTTP POST** for document discovery searches, with parameters submitted securely in the HTTP request body.
 
@@ -93,7 +91,7 @@ patient.identifier=https%3A%2F%2Fwww.ehealth.fgov.be%2Fstandards%2Ffhir%2Fcore%2
 
 The `Authorization: Bearer` token above is obtained through one of the three connection routes specified in [Security & Authentication §2](security.html#2-the-three-authentication--connection-routes-proposal); every request additionally carries DPoP or RFC 9421 tamper-proofing headers ([§3](security.html#3-replay-attack-prevention--query-tamper-proofing-dpop-rfc-9449--rfc-9421)).
 
-#### Conformance & Normative Rules for POST Search:
+##### Conformance & Normative Rules for POST Search:
 1. **HTTP Method & Endpoint**: Consumers **SHALL use `POST [base]/DocumentReference/_search`**.
 2. **Body Encoding**: Search parameters **SHALL be encoded in the request body using `application/x-www-form-urlencoded`**. Parameters **SHALL NOT be placed in the URL query string** in the Belgian profile to prevent sensitive patient identifier leakage in network access logs.
 3. **FHIR Search Semantics**: Search parameter names, modifiers, prefixes, repetition, and combination semantics **SHALL follow standard HL7 FHIR R4 search rules**.
@@ -101,7 +99,7 @@ The `Authorization: Bearer` token above is obtained through one of the three con
 5. **Response Representation**: Successful response **SHALL be `200 OK` with a `Bundle.type = searchset`**, formatted according to the `Accept` header (`application/fhir+json; fhirVersion=4.0`).
 6. **Error Handling**: Failures at the FHIR layer SHALL return the appropriate `4xx`/`5xx` HTTP status code accompanied by an `OperationOutcome` resource.
 
-#### Explicit Rules for POST-Based Pagination:
+##### Explicit Rules for POST-Based Pagination:
 FHIR R4 notes that while an initial search may be POST, subsequent page links in `Bundle.link[relation="next"].url` normally contain URLs. To prevent query criteria leakage during pagination and maintain a strict zero-GET policy for consumers:
 * Initiating hubs **SHALL execute pagination requests using HTTP POST**.
 * Responding servers **SHOULD support POST-based continuation**:
@@ -112,7 +110,7 @@ FHIR R4 notes that while an initial search may be POST, subsequent page links in
   or by including continuation parameters directly in the `application/x-www-form-urlencoded` request body.
 * Server-generated continuation tokens/parameters **MUST remain opaque** to the consumer.
 
-#### Supported Search Parameters:
+##### Supported Search Parameters:
 
 | FHIR Search Parameter | Syntax & Modifier | KMEHR Concept | Description |
 | :--- | :--- | :--- | :--- |
@@ -129,7 +127,7 @@ FHIR R4 notes that while an initial search may be POST, subsequent page links in
 
 The *KMEHR Concept* column above is a pointer, not the full crosswalk: the complete bi-directional field mapping is in [KMEHR to FHIR Mapping §2](mapping-kmehr-to-hub.html#2-master-metadata-mapping-matrix), and the elements being searched are defined in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference).
 
-### 2.3 Response Structure (`Bundle` type = `searchset`)
+#### Response Structure (`Bundle` type = `searchset`)
 
 The answering hub returns an **HTTP 200 OK** with a FHIR `Bundle` of type `searchset`:
 * `Bundle.total`: Total number of matching document entries.
@@ -443,7 +441,7 @@ Each entry conforms to `BeInterhubDocumentReference`; refer to [Envelope & Metad
 }
 ```
 
-### 2.4 Downstream System Unavailability, Partial Failures & OperationOutcome Handling
+#### Downstream System Unavailability, Partial Failures & OperationOutcome Handling
 
 A single discovery query fans out. To answer one `getTransactionList` (MHD ITI-67), the responding hub interrogates hospital EHRs, independent laboratory information systems, pharmacy and practice software, care homes and remote partner hubs, then merges whatever comes back.
 
@@ -472,7 +470,7 @@ sequenceDiagram
     Gateway-->>InitHub: HTTP 200 OK (Bundle type=searchset)<br/>• entry[0..1]: DocumentReference (search.mode = match)<br/>• entry[2]: OperationOutcome (search.mode = outcome)
 ```
 
-#### 2.4.1 Architectural Rules for Partial Failures
+##### Architectural Rules for Partial Failures
 
 1. **HTTP Status Code**: The answering Hub **MUST return HTTP 200 OK** (not 500, 502, or 504) as long as the search request was syntactically valid and any available portion of the federated network responded.
 2. **Searchset Bundle Assembly**:
@@ -481,7 +479,7 @@ sequenceDiagram
    * `Bundle.entry[]` (`search.mode = "outcome"`): A populated **`OperationOutcome`** resource capturing specific issues for each downstream system that failed to reply.
 3. **No Phantom Empty States**: A hub MUST NEVER return an empty `Bundle (total = 0)` without an `OperationOutcome` when underlying systems failed, as this could mislead the treating physician into believing no medical records exist for the patient.
 
-#### 2.4.2 OperationOutcome Issue Structure & Coding
+##### OperationOutcome Issue Structure & Coding
 
 Each failing or timed-out downstream system generates an entry in the `OperationOutcome.issue` list:
 
@@ -492,7 +490,7 @@ Each failing or timed-out downstream system generates an entry in the `Operation
 | **`details`** | `CodeableConcept` | Standard issue type from `http://terminology.hl7.org/CodeSystem/issue-type` with a human-readable text description. |
 | **`diagnostics`** | `string` | Diagnostic text explicitly identifying the failing repository/system (including NIHDI license, CBE number, or URI) and stating that records from that location could not be included. |
 
-#### 2.4.3 Complete Searchset Bundle Example with OperationOutcome
+##### Complete Searchset Bundle Example with OperationOutcome
 
 Below is a complete HTTP 200 OK searchset response: one matched laboratory document reference, plus an embedded `OperationOutcome` reporting the downstream systems that did not answer.
 
@@ -608,7 +606,7 @@ Below is a complete HTTP 200 OK searchset response: one matched laboratory docum
 }
 ```
 
-#### 2.4.4 Initiating Hub & Consuming Gateway Responsibilities
+##### Initiating Hub & Consuming Gateway Responsibilities
 
 Initiating hubs and gateways processing `getTransactionList` (MHD ITI-67) responses **MUST implement the following behaviours** before relaying information to local Intrahub consumers:
 
@@ -620,19 +618,19 @@ Initiating hubs and gateways processing `getTransactionList` (MHD ITI-67) respon
 
 ---
 
-## 3. Transaction 2: `getTransaction` (Belgian FHIR `$retrieve-document` Operation)
+### Transaction 2: `getTransaction` (Belgian FHIR `$retrieve-document` Operation)
 
-### 3.1 Trigger & Scope
+#### Trigger & Scope
 This transaction fires when an initiating hub requests a specific document payload from a responding hub (following a retrieval request received locally via Intrahub). As with discovery, the access decision was already taken by the initiating hub; the responding hub authenticates the calling hub, serves the payload and logs the retrieval.
 
-### 3.2 HTTP Interaction: The `$retrieve-document` Operation
+#### HTTP Interaction: The `$retrieve-document` Operation
 
 > **Architectural Rationale: Why an Operation rather than POST read?**  
 > In HL7 FHIR R4, the standard `read` interaction (`GET [base]/Bundle/{id}` or `GET [base]/Binary/{id}`) is strictly defined as an HTTP GET interaction. Attempting `POST [base]/Bundle/{id]` is invalid FHIR.  
 > Furthermore, transmitting document identifiers or direct repository URIs in GET requests causes those URLs to be logged in plaintext across intermediate proxies and network access logs.  
 > To maintain strict FHIR R4 compliance while enforcing the Belgian **POST-everywhere privacy mandate**, document retrieval is formally specified as a type-level FHIR Operation: **`POST [base]/DocumentReference/$retrieve-document`**.
 
-#### Operation Contract (`OperationDefinition/be-op-retrieve-document`):
+##### Operation Contract (`OperationDefinition/be-op-retrieve-document`):
 * **Operation Code**: `retrieve-document`
 * **Resource Type**: `DocumentReference`
 * **Invocation Level**: Type-level (`system = false`, `type = true`, `instance = false`).
@@ -640,7 +638,7 @@ This transaction fires when an initiating hub requests a specific document paylo
 * **Complex Input Parameter**: `documentReference : Reference(DocumentReference) [1..1]`. Because the operation defines a complex input parameter, HTTP GET invocation is not required under FHIR R4 operation invocation rules.
 * **Direct Resource Output**: A single output parameter named **`return : Resource [0..1]`**. Per FHIR R4 operation rules, when an operation defines a single resource output named `return`, the server returns that resource directly in the HTTP response body without wrapping it inside an outer `Parameters` envelope.
 
-#### Sample HTTP Request (Structured FHIR Document Bundle):
+##### Sample HTTP Request (Structured FHIR Document Bundle):
 ```http
 POST https://hub.cozo.be/fhir/DocumentReference/$retrieve-document HTTP/1.1
 Host: hub.cozo.be
@@ -661,7 +659,7 @@ Authorization: Bearer <calling-hub-authentication-token>
 }
 ```
 
-#### Successful HTTP Response:
+##### Successful HTTP Response:
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/fhir+json; fhirVersion=4.0
@@ -682,7 +680,7 @@ Content-Type: application/fhir+json; fhirVersion=4.0
 
 > **Retrieval via DocumentReference Reference and Gateway Resolution.** In legacy KMEHR hub services, retrieving a document meant re-sending a `select/transaction` element containing the local id, its `@SL` scheme *and* the full list of author `hcparty` elements copied from the list entry — a composite key the consumer had to carry around and reproduce exactly ([KMEHR to FHIR Mapping §2.1](mapping-kmehr-to-hub.html#21-what-actually-identifies-a-transaction-in-kmehr)). In the modernized model, the consumer submits the target `DocumentReference` reference in the `$retrieve-document` request. The responding hub / gateway securely resolves this reference to the internal repository endpoint and returns the document payload. The reference may be literal (`DocumentReference/[id]`, as above) or logical, carrying only the document uniqueId in `identifier` (system `urn:ietf:rfc:3986`), which is how a laboratory observation points to its report ([§4.3](#43-from-a-result-to-the-full-report)). The responding hub SHALL accept both.
 
-### 3.3 Payload Structure: Strictly FHIR Bundles of Type `document`
+#### Payload Structure: Strictly FHIR Bundles of Type `document`
 
 In the Belgian Interhub standard, **all retrieved structured transaction payloads are strictly Bundles of type `document` (`Bundle.type = #document`)**:
 
@@ -712,7 +710,7 @@ flowchart TD
     end
 ```
 
-#### Bundle Constraints:
+##### Bundle Constraints:
 * **`Bundle.type`**: Fixed to `#document`. No other bundle types (`collection`, `transaction`, `batch`) are permitted for shared clinical document payloads.
 * **`Bundle.entry[0]`**: MUST be a valid `Composition` conforming to the relevant profile (`BeInterhubLabComposition`, `BeTelemonitoringComposition`, etc.).
 * **Narrative Requirement (`Composition.section.text`)**: In accordance with FHIR and Belgian clinical safety guidelines, every section MUST include human-readable XHTML narrative (`status = #generated` or `#extensions`), ensuring safe rendering on any clinical workstation.
@@ -720,7 +718,7 @@ flowchart TD
 
 Why documents rather than FHIR messaging or granular resource access: [Design Rationale](resource-considerations.html#2-evaluation-of-candidate-carrier-paradigms). Complete worked payloads for both supported document types: [Laboratory Reports §5](lab-report-sharing.html#5-complete-json-document-walkthrough) and [Telemonitoring §5](mapping-telemonitoring-to-hub.html#5-complete-json-document-walkthrough).
 
-### 3.4 Transaction Sets and Rendered PDF (`getTransactionSet`)
+#### Transaction Sets and Rendered PDF (`getTransactionSet`)
 
 Two things the legacy hub services do at retrieval time have no place in the two transactions above, and both are still required.
 
@@ -795,13 +793,13 @@ Rules:
 
 <a id="lab-observation-search"></a>
 
-## 4. Transaction 3: Laboratory Observation Search (DIGIRELAB)
+### Transaction 3: Laboratory Observation Search (DIGIRELAB)
 
 **Implementer entry point:** [Request and search parameters](#lab-observation-search-parameters), [responder capabilities](CapabilityStatement-BeInterhubDocumentResponder.html), [consumer capabilities](CapabilityStatement-BeInterhubDocumentConsumer.html), and the [returned laboratory observation profile](StructureDefinition-be-interhub-lab-observation.html).
 
 The artifact index's **Search Parameters** section lists search parameter definitions authored by this guide, including the custom `searchtype`. It is not the complete list of supported query inputs. The table below specifies all inputs for this transaction, including reused FHIR search parameters and result controls. Laboratory observation search uses `POST Observation/_search`, so it has no custom OperationDefinition.
 
-### 4.1 Trigger & Scope
+#### Trigger & Scope
 
 Under the Belgian **DIGIRELAB** initiative, laboratory reports are shared as FHIR Document Bundles containing discrete `Observation` resources. Clinical use cases such as chronic disease follow-up (a glucose curve, renal function under oncology treatment) need a **time series of one analyte** (e.g. Fasting Glucose `1558-6`, Serum Creatinine `2160-0`, HbA1c `4548-4`) across hospital stays, laboratories and regional hubs.
 
@@ -818,7 +816,7 @@ The laboratory specialization retains mandatory LOINC coding with open slicing f
 
 ---
 
-### 4.2 References Without Endpoints: Logical References
+#### References Without Endpoints: Logical References
 
 The responding hub serves **no endpoint other than** `DocumentReference` (search and `$retrieve-document`) and `Observation` (search). There is no `/Patient`, `/Practitioner`, `/Organization`, `/Specimen` or `/Encounter`.
 
@@ -857,7 +855,7 @@ A consumer **SHALL NOT** try to resolve a logical reference. There is nothing to
 
 ---
 
-### 4.3 From a Result to the Full Report
+#### From a Result to the Full Report
 
 When a clinician needs the full context of a value (specimen, requesting physician, biologist validation, conclusion), the initiating hub:
 
@@ -884,7 +882,7 @@ A responding hub **SHALL** accept both forms of `documentReference`: the literal
 
 ---
 
-### 4.4 Responder Rules
+#### Responder Rules
 
 1. **POST search only.** `POST [base]/Observation/_search`. There is no read, no operation and no GET search, for the same reason as [§2.2](#22-http-interaction--query-parameters-post-based-search).
 2. **Same access decision as the source document.** An observation **SHALL NOT** be returned to a request for which its source `DocumentReference` would not be returned by `getTransactionList`. This covers `BeExtPatientAccess`, `securityLabel` and the hub's local filtering. Extracting a value from a document must not become a way around the document's access rules.
@@ -896,7 +894,7 @@ A responding hub **SHALL** accept both forms of `documentReference`: the literal
 
 <a id="lab-observation-search-parameters"></a>
 
-### 4.5 HTTP Interaction & Query Parameters
+#### HTTP Interaction & Query Parameters
 
 ```http
 POST [base]/Observation/_search HTTP/1.1
@@ -922,7 +920,7 @@ Partial failures of downstream sources are reported exactly as for `getTransacti
 
 ---
 
-### 4.6 Federated Query Sequence
+#### Federated Query Sequence
 
 ```mermaid
 sequenceDiagram
@@ -959,7 +957,7 @@ sequenceDiagram
 
 ---
 
-### 4.7 Wire Example: Response Searchset Bundle
+#### Wire Example: Response Searchset Bundle
 
 Abridged to one of the two matches. The complete, validated response is the example `BundleLabObservationSearchsetExample`.
 
@@ -1031,7 +1029,7 @@ Abridged to one of the two matches. The complete, validated response is the exam
 
 ---
 
-### 4.8 Relationship to IHE QEDm and IHE mXDE
+#### Relationship to IHE QEDm and IHE mXDE
 
 Transaction 3 does not reinvent anything. It reuses two IHE profiles, and keeps them no more complex than the Interhub needs.
 
@@ -1060,9 +1058,9 @@ This transaction is **aligned with** QEDm and mXDE, not claimed as conformant. A
 
 ---
 
-## 5. Error Codes & Exception Crosswalk
+### Error Codes & Exception Crosswalk
 
-### 5.1 How the legacy protocol reports failure
+#### How the legacy protocol reports failure
 
 KMEHR hub services do not signal application errors with SOAP faults. Every response carries an `acknowledge` element, and **that** is where success and failure live:
 
@@ -1092,7 +1090,7 @@ The FHIR mapping follows directly, and it is the same mechanism as [§2.4](#24-d
 
 Preserving `error/cd` verbatim matters: Belgian hub error codes are structured (`VZN.0.SYS.MH.X` names the subsystem that failed) and existing support processes are built on them. A gateway that collapses them into a generic FHIR issue code destroys the only diagnostic signal the service desk has.
 
-### 5.2 Condition to HTTP status crosswalk
+#### Condition to HTTP status crosswalk
 
 | Condition | HTTP Status | FHIR `OperationOutcome.issue.code` | Remediation / Clinical Context |
 | :--- | :--- | :--- | :--- |
@@ -1110,7 +1108,7 @@ The `401` / `403` conditions above are raised by the authentication and tamper-p
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [Envelope & Metadata](envelope-and-metadata.html) — the `BeInterhubDocumentReference` returned by `getTransactionList`.
 * **Next:** [Security & Authentication](security.html) — how the calling hub is authenticated, how requests are protected against replay and tampering, and how each of these transactions is audited.

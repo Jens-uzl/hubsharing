@@ -1,4 +1,4 @@
-## Executive Summary & Context
+### Executive Summary & Context
 
 During the last 15 years, medical information has been exchanged in the national project of the eHealth hubs and vaults using XML messages according to the Belgian **KMEHR** standard.
 KMEHR (Kind Messages for Electronic Healthcare Records) was developed about a decade earlier, before IHE profiles such as XDS and healthcare document formats such as CDA existed.
@@ -24,7 +24,7 @@ The [How to Read This Guide](#how-to-read-this-guide) section explains how the g
 
 ---
 
-## Core Architectural Principles
+### Core Architectural Principles
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,7 @@ flowchart TD
 
 ---
 
-## How to Read This Guide
+### How to Read This Guide
 
 The navigation bar groups this specification into five sections, ordered so that each section only depends on the ones to its left.
 Within the guide, **every topic is described on a separate page**.
@@ -157,14 +157,14 @@ flowchart LR
 * **Implementing one document type?**
   Read [Envelope & Metadata](envelope-and-metadata.html) and [Transactions](transactions.html) once, then only your domain page: [Laboratory Reports](lab-report-sharing.html) or [Telemonitoring](mapping-telemonitoring-to-hub.html).
 
-### Architecture — the ecosystem, and the reasoning behind it
+#### Architecture — the ecosystem, and the reasoning behind it
 
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
 | **[Architecture & Federation Model](architecture.html)** | The Belgian Hub/Metahub network, regional eHealth hubs, what counts as a hub source, federated routing, and the dual-stack transition gateway. | Hub / metahub / hub source model · `homeCommunityId` routing · dual-stack gateway. Security and transactions appear here only in summary. |
 | **[Design Rationale](resource-considerations.html)** | Why Interhub shares FHIR *documents* discovered through a `DocumentReference` envelope, and why FHIR messaging and granular resource access were rejected. | Carrier-paradigm evaluation · document immutability · rationale for decoupled discovery. |
 
-### Specification — the normative contract
+#### Specification — the normative contract
 
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
@@ -173,7 +173,7 @@ flowchart LR
 | **[Security & Authentication](security.html)** | The Interhub trust model (the initiating hub owns access control), the three hub authentication routes, mTLS, DPoP (RFC 9449) / RFC 9421 tamper-proofing, and IHE BALP auditing. | **All security topics.** [Architecture §5](architecture.html#5-trust-model-security-architecture--connection-routes-proposal) is a two-paragraph summary of this page; this page takes precedence. |
 | **[End-to-End Encryption](end-to-end-encryption.html)** | *Discussion paper.* KMEHR ETEE versus FHIR E2EE, JWE and CMS payload encryption, zero-knowledge hubs, and the recommended tiered hybrid strategy. | The open question of payload encryption. **Non-normative** — it does not change what [Security & Authentication](security.html) mandates. |
 
-### Document Types — the payloads in practice
+#### Document Types — the payloads in practice
 
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
@@ -182,7 +182,7 @@ flowchart LR
 
 Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transactions](transactions.html); they specify only what is domain-specific.
 
-### Migration & Alignment — legacy KMEHR and Europe
+#### Migration & Alignment — legacy KMEHR and Europe
 
 | Page | What it covers | Topics this page owns |
 | :--- | :--- | :--- |
@@ -191,7 +191,7 @@ Both pages assume [Envelope & Metadata](envelope-and-metadata.html) and [Transac
 | **[Minimal vs. Comprehensive](minimal-vs-comprehensive.html)** | Direct side-by-side element comparison table and use case suitability matrix between `BeInterhubMinimalDocumentReference` and `BeInterhubDocumentReference`. | Technical comparison between Minimal and Comprehensive Belgian DocumentReference profiles. |
 | **[EHDS Alignment](ehds-alignment.html)** | Alignment with European Health Data Space profiles and the MyHealth@EU cross-border exchange flow. | Belgian ↔ EU profile matrix · what Belgium adds beyond baseline EHDS · NCPeH translation. |
 
-### Reference
+#### Reference
 
 For discrete laboratory results, go directly to [Laboratory Observation Search (Transaction 3)](transactions.html#lab-observation-search) and its [complete search parameter table](transactions.html#lab-observation-search-parameters). The artifact index lists locally defined artifacts; it does not enumerate every supported query parameter.
 
@@ -201,7 +201,7 @@ For discrete laboratory results, go directly to [Laboratory Observation Search (
 
 ---
 
-## Key Artifacts Overview
+### Key Artifacts Overview
 
 * **Profiles**:
   * `BeInterhubDocumentReference`: Metadata discovery envelope for search results (`getTransactionList`), deriving from `IHE.MHD.Comprehensive.DocumentReference` with contained references.

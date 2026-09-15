@@ -1,5 +1,3 @@
-# IHE MHD Minimal vs. Comprehensive DocumentReference: Technical Comparison
-
 > **Where this document sits in the guide** — *Migration & Alignment*, page 3 of 4. This document provides a direct **side-by-side technical comparison** between the two Belgian metadata profiles:
 > * **`BeInterhubMinimalDocumentReference`** (deriving from `IHE.MHD.Minimal.DocumentReference`)
 > * **`BeInterhubDocumentReference`** (deriving from `IHE.MHD.Comprehensive.DocumentReference` with Contained Resources)
@@ -8,7 +6,7 @@
 
 ---
 
-## 1. Executive Summary
+### Executive Summary
 
 The **IHE Mobile access to Health Documents (MHD)** profile family offers two main tiers for metadata carrier envelopes: **Minimal** and **Comprehensive**.
 
@@ -26,7 +24,7 @@ The **IHE Mobile access to Health Documents (MHD)** profile family offers two ma
 
 ---
 
-## 2. Element-by-Element Comparison Matrix
+### Element-by-Element Comparison Matrix
 
 | FHIR Element | `BeInterhubMinimalDocumentReference` (Minimal) | `BeInterhubDocumentReference` (Comprehensive) | Impact & Architectural Rationale |
 | :--- | :--- | :--- | :--- |
@@ -56,7 +54,7 @@ The **IHE Mobile access to Health Documents (MHD)** profile family offers two ma
 
 ---
 
-## 3. Deep Dive: Contained Resources vs. External References
+### Deep Dive: Contained Resources vs. External References
 
 The most significant structural distinction between the two profiles lies in **how actors and patient demographics are referenced**:
 
@@ -79,7 +77,7 @@ flowchart TD
     end
 ```
 
-### 3.1 The Multi-Author Challenge
+#### The Multi-Author Challenge
 * **The Federal Limitation**: The Belgian federal core profile `BeDocumentReference` (`hl7.fhir.be.core`) caps `author` at `1..1`.
 * **The Interhub Reality**: A Belgian hospital document involves multiple authoring entities:
   1. The **Answering Regional Hub** (e.g. CoZo, RSW, Abrumet+).
@@ -89,14 +87,14 @@ flowchart TD
   5. The **Software Application** (e.g. LIS, EHR).
 * **Solution**: `BeInterhubDocumentReference` (Comprehensive) inherits from `IHE.MHD.Comprehensive.DocumentReference`, enabling `author 1..*` with `#contained` resources so all parties are conveyed without violating federal single-reference cardinality constraints.
 
-### 3.2 The N+1 Network Query Problem
+#### The N+1 Network Query Problem
 In a federated network of independent regional hubs:
 * With **Minimal (External References)**: Assembling and displaying a list of 50 search results requires executing up to **150+ secondary HTTP queries** across regional gateways to retrieve physician names, institution identifiers, and demographic snapshots.
 * With **Comprehensive (Contained References)**: All display names, NIHDI numbers, and CBE enterprise numbers are delivered **inline** inside the searchset Bundle. The search table renders instantly with **zero secondary network round-trips**.
 
 ---
 
-## 4. Use Case Suitability Matrix
+### Use Case Suitability Matrix
 
 | Use Case Scenario | Recommended Profile | Rationale |
 | :--- | :--- | :--- |
@@ -109,9 +107,9 @@ In a federated network of independent regional hubs:
 
 ---
 
-## 5. Comparative JSON Instances
+### Comparative JSON Instances
 
-### 5.1 Minimal Profile Instance (`BeInterhubMinimalDocumentReference`)
+#### Minimal Profile Instance (`BeInterhubMinimalDocumentReference`)
 
 ```json
 {
@@ -151,7 +149,7 @@ In a federated network of independent regional hubs:
 }
 ```
 
-### 5.2 Comprehensive Profile Instance (`BeInterhubDocumentReference`)
+#### Comprehensive Profile Instance (`BeInterhubDocumentReference`)
 
 ```json
 {
@@ -326,7 +324,7 @@ In a federated network of independent regional hubs:
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [IHE MHD Alignment](ihe-mhd-alignment.html) — profile selection rationale and working group discussions.
 * **Next:** [EHDS Alignment](ehds-alignment.html) — European cross-border alignment and translation flow.

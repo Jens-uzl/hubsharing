@@ -1,12 +1,10 @@
-# Architectural Discussion: End-to-End Encryption (E2EE) in FHIR Interhub Sharing
-
 > **Where this page sits in the guide** — *Specification*, page 4 of 4. **This page is a discussion paper, not a normative specification.** It answers a single open question: should Belgium keep KMEHR-style payload encryption in the FHIR world? The security that *is* normative today — TLS 1.3 / mTLS, hub authentication, tamper-proofing and auditing — is specified in [Security & Authentication](security.html).
 >
 > * **Owned by this page:** the ETEE / ETK background, the JWE and CMS payload-encryption options, the trade-off analysis, and the recommended tiered hybrid strategy.
 > * **Related, specified elsewhere:** the metadata extension that flags an encrypted payload → [Envelope & Metadata](envelope-and-metadata.html#33-end-to-end-encryption-metadata-beextendtoendencryption); transport and hub authentication → [Security & Authentication](security.html); the cross-border consequences → [EHDS Alignment](ehds-alignment.html#33-end-to-end-application-encryption-etee--etk-depot).
 > * **Previous:** [Security & Authentication](security.html) · **Next:** [Laboratory Reports](lab-report-sharing.html)
 
-## 1. Executive Summary & Discussion Context
+### Executive Summary & Discussion Context
 
 **End-to-End Encryption (ETEE)** was one of the defining features of the legacy **KMEHR** ecosystem. Sending a medical transaction across regional hubs or through the eHealthBox meant encrypting the `<folder>` payload with the recipient's public key, fetched from the national **eHealth ETK (Encryption Token Key) Depot**. The regional hubs and the Metahub routed those messages as zero-knowledge brokers: they read the plaintext `<header>` and `<transactionSummary>`, and the clinical content stayed closed to them.
 
@@ -16,7 +14,7 @@ The move to **HL7® FHIR® R4** and the **IHE MHD** profile family puts that des
 
 ---
 
-## 2. How KMEHR ETEE Used to Work
+### How KMEHR ETEE Used to Work
 
 ```mermaid
 sequenceDiagram
@@ -38,7 +36,7 @@ sequenceDiagram
 
 The KMEHR structures named in this flow (`<header>`, `<folder>`, `<transactionSummary>`) are mapped to their FHIR counterparts in [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html#2-master-metadata-mapping-matrix).
 
-### 2.1 ETEE in Interhub Retrieval: the Caller Nominates the Recipient
+#### ETEE in Interhub Retrieval: the Caller Nominates the Recipient
 
 The flow above is the *messaging* flow — a sender encrypts for a known recipient and hands the result to a broker. Interhub **retrieval** works the other way round, and the difference decides where the encryption metadata has to live.
 
@@ -68,7 +66,7 @@ Three consequences for any FHIR design that keeps payload encryption:
 
 ---
 
-## 3. How Would End-to-End Encryption Look in the FHIR World?
+### How Would End-to-End Encryption Look in the FHIR World?
 
 Two concrete mechanisms are available if application-layer payload encryption is retained in FHIR Interhub sharing:
 
@@ -85,14 +83,14 @@ flowchart TD
     end
 ```
 
-### 3.1 Option 1: JSON Web Encryption (JWE - RFC 7516) *(Recommended for FHIR)*
+#### Option 1: JSON Web Encryption (JWE - RFC 7516) *(Recommended for FHIR)*
 
 JWE keeps payload encryption inside the JSON world the rest of the exchange already inhabits:
 1. The originating system serializes the complete FHIR Document Bundle (`Bundle.type = #document`).
 2. The JSON string is encrypted into a **JWE (RFC 7516)** compact or general JSON serialization using AES-GCM (e.g. `A256GCM`) with the recipient's public key (RSA-OAEP-256 or ECDH-ES) fetched from the eHealth ETK depot.
 3. The encrypted JWE is stored as a FHIR **`Binary`** resource (`contentType = application/jose`) or encrypted document endpoint, retrievable via `BeInterhubDocumentReference.content.attachment.url` (element specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference)).
 
-#### Structure in `BeInterhubDocumentReference`:
+##### Structure in `BeInterhubDocumentReference`:
 ```json
 {
   "resourceType": "DocumentReference",
@@ -147,7 +145,7 @@ JWE keeps payload encryption inside the JSON world the rest of the exchange alre
 }
 ```
 
-### 3.2 Option 2: CMS / PKCS#7 (`application/pkcs7-mime`)
+#### Option 2: CMS / PKCS#7 (`application/pkcs7-mime`)
 
 Alternatively, the FHIR Document Bundle is encoded into a standard ASN.1 Cryptographic Message Syntax (CMS / PKCS#7) enveloped-data structure using the recipient's X.509 certificate from the ETK depot.
 * **MIME Type**: `application/pkcs7-mime`.
@@ -156,7 +154,7 @@ Alternatively, the FHIR Document Bundle is encoded into a standard ASN.1 Cryptog
 
 ---
 
-## 4. Architectural Analysis: Should Belgium Continue E2EE in FHIR?
+### Architectural Analysis: Should Belgium Continue E2EE in FHIR?
 
 The national decision turns on a trade-off between **zero-knowledge payload encryption** and **transport-layer security (TLS 1.3 / mTLS) between mutually trusted hubs**:
 
@@ -169,7 +167,7 @@ The national decision turns on a trade-off between **zero-knowledge payload encr
 | **5. EHDS Cross-Border Interop** | Incompatible without central decrypt | Natively compatible |
 | **6. Tooling & Ecosystem** | Requires custom cryptographic plugins | Standard FHIR parsers & apps |
 
-### 4.1 Detailed Breakdown of Challenges with E2EE in FHIR:
+#### Detailed Breakdown of Challenges with E2EE in FHIR:
 
 1. **Loss of Discrete Querying & Indexing (e.g. DIGIRELAB)**:
    * Under the Belgian **DIGIRELAB Phase 3** vision, clinicians and applications need to query specific lab observations across time (the Interhub laboratory observation search, `POST /Observation/_search` with `code=1558-6&patient.identifier=...`, see [Transactions §4](transactions.html#4-transaction-3-laboratory-observation-search-digirelab)).
@@ -189,7 +187,7 @@ The national decision turns on a trade-off between **zero-knowledge payload encr
 
 ---
 
-## 5. Recommended Strategic Solution: The Tiered Hybrid Architecture
+### Recommended Strategic Solution: The Tiered Hybrid Architecture
 
 The choice need not be all or nothing. This Implementation Guide proposes a **tiered hybrid architecture**, matching the protection to the sensitivity of the document:
 
@@ -215,7 +213,7 @@ In both tiers the transport and authentication layer is the one specified in [Se
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [Security & Authentication](security.html) — the normative security layer (mTLS, hub authentication, tamper-proofing, auditing) that this discussion sits on top of.
 * **Next:** [Laboratory Reports](lab-report-sharing.html) — the first of the two document types, and a Tier 1 payload in the strategy recommended above.

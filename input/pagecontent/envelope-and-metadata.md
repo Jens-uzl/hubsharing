@@ -1,12 +1,10 @@
-# Document Envelope & Metadata Specification
-
 > **Where this page sits in the guide** — *Specification*, page 1 of 4. This page is the **single source of truth for `BeInterhubDocumentReference`**. Every other page that mentions a metadata field, extension or identifier links back here instead of restating it.
 >
 > * **Owned by this page:** all `DocumentReference` elements, the four Belgian extensions (`homeCommunityId`, `patientAccess`, `endToEndEncryption`, `recordDateTime`), and the UTC normalization rule.
 > * **Not covered here:** how the envelope is queried and returned → [Transactions](transactions.html); who may call and how the call is authenticated → [Security & Authentication](security.html); whether the payload behind `content.attachment.url` should itself be encrypted → [End-to-End Encryption](end-to-end-encryption.html); the KMEHR / XDS.b origin of each field → [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html); deep dive into IHE MHD profile choices and open discussions → [IHE MHD Alignment](ihe-mhd-alignment.html).
 > * **Previous:** [Design Rationale](resource-considerations.html) · **Next:** [Transactions](transactions.html)
 
-## 1. Overview of the Metadata Model
+### Overview of the Metadata Model
 
 Discovery and retrieval are strictly separated in Interhub; the reasoning behind that separation is recorded in [Design Rationale §3](resource-considerations.html#3-the-role-of-contained-mhd-comprehensive-documentreference). An initiating hub querying for available health records (`getTransactionList`, specified in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences)) receives no clinical content at all. What comes back is a lightweight metadata envelope, the **`BeInterhubDocumentReference`**, conforming to **`IHE.MHD.Comprehensive.DocumentReference`** with **Contained References**.
 
@@ -87,16 +85,16 @@ Filled-in examples of this envelope are given in [Laboratory Reports §4](lab-re
 
 ---
 
-## 2. Element-by-Element Specification (`BeInterhubDocumentReference`)
+### Element-by-Element Specification (`BeInterhubDocumentReference`)
 
 The `BeInterhubDocumentReference` profile derives directly from **`IHE.MHD.Comprehensive.DocumentReference`** and mandates the **Contained References** pattern.
 
-### Why Contained Resources Are Mandated
+#### Why Contained Resources Are Mandated
 1. **Multi-Author Representation**: The federal `BeDocumentReference` profile restricts `author` to `1..1`. Inheriting from `IHE.MHD.Comprehensive.DocumentReference` allows `author 1..*`, enabling the envelope to capture the full Belgian author chain (Answering Hub, Source Institution, Practitioner, and Application) simultaneously.
 2. **Elimination of N+1 Network Latency**: In a federated multi-hub network, resolving external practitioner and organization references across distinct regional gateways degrades performance. Embedding parties as `#contained` resources allows client applications to render the document catalog immediately with zero secondary HTTP round-trips.
 3. **Point-in-Time Demographics (`context.sourcePatientInfo`)**: Captures the immutable demographic state of the patient at the exact instant of publication.
 
-### Element Mapping & Conformance Matrix
+#### Element Mapping & Conformance Matrix
 
 | Element | Card. | Type | Conformance & Belgian Rule |
 | :--- | :--- | :--- | :--- |
@@ -126,7 +124,7 @@ The `BeInterhubDocumentReference` profile derives directly from **`IHE.MHD.Compr
 
 > **Note on Removed Elements**: Elements **`docStatus`** and **`content.attachment.data`** are constrained to `0..0` by IHE MHD Minimal and Comprehensive profiles and are **prohibited** in `BeInterhubDocumentReference`. Document lifecycle status is governed by `status` and `relatesTo`, while payload retrieval is performed out-of-band via `$retrieve-document` (or downstream `content.attachment.url` / ITI-68).
 
-### 2.1 Relationship to IHE MHD & Federal Profiles
+#### Relationship to IHE MHD & Federal Profiles
 
 `BeInterhubDocumentReference` derives from **`IHE.MHD.Comprehensive.DocumentReference`** rather than `hl7.fhir.be.core` `BeDocumentReference`. For an in-depth architectural comparison of profile options (Minimal vs Comprehensive, Contained vs UnContained, and open working group discussions), see the dedicated **[IHE MHD Alignment](ihe-mhd-alignment.html)** page.
 
@@ -137,9 +135,9 @@ All embedded resources within `contained` target the official Belgian core profi
 
 ---
 
-## 3. Belgian Extensions Deep-Dive
+### Belgian Extensions Deep-Dive
 
-### 3.1 Home Community ID (`BeExtHomeCommunityId`)
+#### Home Community ID (`BeExtHomeCommunityId`)
 * **URL**: `https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-home-community-id` (or `urn:ihe:iti:xds:2023:homeCommunityId`)
 * **Cardinality**: `1..1` (Mandatory for Interhub exchanges)
 * **Value**: `uri` (e.g., `urn:oid:1.3.6.1.4.1.21297.1.3` for CoZo, `urn:oid:1.3.6.1.4.1.21297.1.1` for Abrumet+), **or** `Identifier` carrying the hub's **eHealth Platform (EHP) number**
@@ -147,7 +145,7 @@ All embedded resources within `contained` target the official Belgian core profi
 
 > **Alignment note — hubs are identified by their EHP number today.** In the live KMEHR ecosystem a hub is not addressed by an OID but by its **eHealth Platform number**, a 10-digit `1990……` identifier. Any `homeCommunityId` OID assigned by this IG is therefore an *additional* identifier registered against the hub's EHP number. Essential for cross-community federation, allowing initiating gateways to route retrieve calls to the correct responding hub.
 
-### 3.2 Belgian Patient Access Metadata (`BeExtPatientAccess`)
+#### Belgian Patient Access Metadata (`BeExtPatientAccess`)
 Belgian patients hold a legal right of access to their own medical records through certified national and regional portals such as MaSanté and MijnGezondheid. That right is not unconditional: a physician may delay or withhold a document under therapeutic exception.
 
 * **URL**: `https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-patient-access`
@@ -166,7 +164,7 @@ Belgian patients hold a legal right of access to their own medical records throu
 | *(no equivalent)* | `access = never` | `never` is a forward-looking addition of this IG. |
 | `transaction/cd[@S="LOCAL" @SL="PatientAccessDate"]` | `accessDate` | Threshold date: visible once passed. Formats `dd/MM/yyyy`, `dd-MM-yyyy`, `yyyy-MM-dd` normalized to FHIR `date`. |
 
-### 3.3 End-to-End Encryption Metadata (`BeExtEndToEndEncryption`)
+#### End-to-End Encryption Metadata (`BeExtEndToEndEncryption`)
 * **URL**: `https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-end-to-end-encryption`
 * **Sub-extensions**:
   1. `actorId` (`string`, `1..1`): Identifier of the encryption recipient (NIHDI number, CBE number, or SSIN).
@@ -174,13 +172,13 @@ Belgian patients hold a legal right of access to their own medical records throu
   3. `applicationId` (`string`, `0..1`): IT application identifier registered in the eHealth ETK depot.
   4. `keyId` (`string`, `0..1`): Encryption Token Key (ETK) identifier.
 
-### 3.4 Source System Recording Timestamp (`BeExtRecordDateTime`)
+#### Source System Recording Timestamp (`BeExtRecordDateTime`)
 * **URL**: `https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-record-datetime`
 * **Cardinality**: `0..1`
 * **Value**: `instant` (UTC ISO 8601)
 * **Purpose**: Records the exact timestamp when the document was persisted in the originating hub source system (corresponds to KMEHR `recorddatetime`).
 
-### 3.5 Healthcare Party Type (`BeExtHcPartyType`)
+#### Healthcare Party Type (`BeExtHcPartyType`)
 Carries the `CD-HCPARTY` code inline next to the contained reference so consumers know the party type without unpacking the resource:
 
 * **URL**: `https://www.ehealth.fgov.be/standards/fhir/interhub/StructureDefinition/be-ext-hcparty-type`
@@ -208,19 +206,19 @@ Carries the `CD-HCPARTY` code inline next to the contained reference so consumer
 
 ---
 
-## 4. Technical Algorithms & Developer Rules
+### Technical Algorithms & Developer Rules
 
-### 4.1 Timezone Normalization to UTC (Z)
+#### Timezone Normalization to UTC (Z)
 1. Concatenate date and time strings from KMEHR `<date>` and `<time>`.
 2. Apply local Belgian offset (CET `+01:00` / CEST `+02:00`).
 3. Standardize into **UTC ISO 8601 (`YYYY-MM-DDThh:mm:ssZ`)**.
 
-### 4.2 Multiple Codings: National and Local Codes for the Same Concept
+#### Multiple Codings: National and Local Codes for the Same Concept
 * **Rule 1 (Add codings)**: `category` and `type` accept additional codings. Responding hubs MUST NOT drop local codings (`@SL` / local scheme) when relaying metadata.
 * **Rule 2 (Distinct concepts)**: Distinct clinical categories belong in separate `category` elements.
 * **Rule 3 (No code)**: Use `text` for un-coded local labels; never synthesize invalid `CD-TRANSACTION` codes.
 
-### 4.3 Logical References & Contained Pattern
+#### Logical References & Contained Pattern
 Belgian Interhub combines **Contained References** for actors with **Logical References** for document associations:
 1. **Contained Actors (`author`, `authenticator`, `context.sourcePatientInfo`)**: Direct `#contained-id` pointers eliminate network latency.
 2. **Document Version Relationships (`relatesTo`)**: `relatesTo.target.identifier` is mandatory (`system = "urn:ietf:rfc:3986"`), referencing the `uniqueId` of the related document without requiring immediate dereferencing.
@@ -242,7 +240,7 @@ Belgian Interhub combines **Contained References** for actors with **Logical Ref
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [Design Rationale](resource-considerations.html) — why discovery metadata is decoupled from the payload.
 * **Next:** [Transactions](transactions.html) — how this envelope is searched (ITI-67) and how the payload it points to is retrieved (ITI-68).

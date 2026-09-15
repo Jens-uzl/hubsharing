@@ -1,12 +1,10 @@
-# European Health Data Space (EHDS) Alignment & Interoperability
-
 > **Where this page sits in the guide** — *Migration & Alignment*, page 2 of 2. It looks outward: how everything specified earlier in this guide maps onto European cross-border exchange.
 >
 > * **Owned by this page:** the Belgian ↔ EHDS profile alignment matrix, the Belgian capabilities that go beyond baseline EHDS, and the MyHealth@EU gateway translation flow.
 > * **Assumes:** [Envelope & Metadata](envelope-and-metadata.html) (the extensions compared here) and [Laboratory Reports](lab-report-sharing.html) (the EU lab document type).
 > * **Previous:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html) · **Next:** [Artifacts](artifacts.html) — the machine-readable profiles, extensions and examples behind every page of this guide.
 
-## 1. Context & Strategic Alignment
+### Context & Strategic Alignment
 
 The **European Health Data Space (EHDS)** regulation lays down common standards, technical architectures and interoperability profiles for the cross-border primary use of health data between EU Member States, delivered through **MyHealth@EU / eHDSI**. The European Commission and HL7 Europe have named a set of priority clinical domains:
 * **Laboratory Results (EU Lab)**: Laboratory test reports, panels, observations, and specimens.
@@ -19,7 +17,7 @@ Belgian Interhub modernization is bound by a firm requirement: **strict alignmen
 
 ---
 
-## 2. Structural Alignment: Belgian Interhub vs. EHDS Profiles
+### Structural Alignment: Belgian Interhub vs. EHDS Profiles
 
 ```mermaid
 flowchart TD
@@ -45,7 +43,7 @@ flowchart TD
     BBundle --> BResults
 ```
 
-### 2.1 Profile Alignment Matrix
+#### Profile Alignment Matrix
 
 | EHDS Profile / Element | Belgian Interhub Profile / Element | Interoperability & Conformance Notes |
 | :--- | :--- | :--- |
@@ -57,29 +55,29 @@ flowchart TD
 
 ---
 
-## 3. Belgian Advancements Beyond Baseline EHDS
+### Belgian Advancements Beyond Baseline EHDS
 
 Belgium carries several capabilities that the European baseline does not require, each of them driven by day-to-day care delivery rather than by cross-border exchange. None of them breaks downstream compatibility:
 
-### 3.1 Federated Multi-Hub Routing (`homeCommunityId`)
+#### Federated Multi-Hub Routing (`homeCommunityId`)
 * **EHDS**: Typically models exchanges through a single National Contact Point for eHealth (NCPeH) per Member State.
 * **Belgium**: Operates a federated multi-hub network (CoZo, RSW, Abrumet+, Zodap, Metahub). The Belgian profile incorporates `BeExtHomeCommunityId` and `repositoryUniqueId` to support distributed multi-hub queries, deduplication, and direct peer-to-peer document retrieval.
 
-### 3.2 Granular Patient Access Governance (`BeExtPatientAccess`)
+#### Granular Patient Access Governance (`BeExtPatientAccess`)
 * **EHDS**: Patient access is generally handled out-of-band at the portal level.
 * **Belgium**: Metadata explicitly encodes patient portal visibility permissions (`yes`, `no`, `never`), release delay dates (`accessDate`), and clinical withholding justifications (`deniedReason`), enforcing Belgian patient rights legislation directly within the metadata layer.
 
-### 3.3 End-to-End Application Encryption (ETEE / ETK Depot)
+#### End-to-End Application Encryption (ETEE / ETK Depot)
 * **EHDS**: Primarily relies on transport-layer security (TLS) between gateways.
 * **Belgium**: Supports payload-level end-to-end encryption using the recipient's public key from the national eHealth ETK Depot (`BeExtEndToEndEncryption`), ensuring document confidentiality across untrusted intermediaries. This capability is precisely where Belgian and European models pull apart: encrypted payloads cannot be mediated by a National Contact Point, which is why this IG recommends restricting it to a sealed-records tier — see [End-to-End Encryption §5](end-to-end-encryption.html#5-recommended-strategic-solution-the-tiered-hybrid-architecture).
 
-### 3.4 Strict Document Typing (`Bundle.type = #document`)
+#### Strict Document Typing (`Bundle.type = #document`)
 * **EHDS**: Allows various exchange modalities (FHIR documents, RESTful searches on individual resources, CDA XML).
 * **Belgium**: Standardizes Interhub sharing strictly on **FHIR Bundles of type `document`** (`MHD ITI-68`), ensuring complete clinical immutability, attestability, and ease of archiving.
 
 ---
 
-## 4. Cross-Border Gateway Translation (MyHealth@EU and Belgian Hubs)
+### Cross-Border Gateway Translation (MyHealth@EU and Belgian Hubs)
 
 The flow below traces what happens when a healthcare provider elsewhere in Europe queries a Belgian patient's records through MyHealth@EU:
 
@@ -118,14 +116,14 @@ In Interhub terms the NCPeH is simply another **initiating hub**: it performs th
 
 ---
 
-## 5. Architectural Alignment: Belgian POST-Everywhere API & IHE MHD / XDS Gateway Adaptation
+### Architectural Alignment: Belgian POST-Everywhere API & IHE MHD / XDS Gateway Adaptation
 
-### 5.1 The Privacy Imperative: Zero-GET at the National Boundary
+#### The Privacy Imperative: Zero-GET at the National Boundary
 In HTTP GET interactions, request paths and query parameters are logged in plaintext across intermediate web servers, reverse proxies, API gateways, load balancers, SIEM systems, browser histories, and enterprise monitoring logs (`access.log`). Placing sensitive patient identifiers (such as Belgian SSINs) or clinical search criteria in GET query strings or URLs creates significant data leakage risks.
 
 To enforce strict medical confidentiality and GDPR data minimization, Belgian Interhub mandates **HTTP POST everywhere** across all consumer-facing and hub-to-hub boundaries.
 
-### 5.2 Three-Tier Conformance Architecture
+#### Three-Tier Conformance Architecture
 
 To ensure seamless interoperability with European MyHealth@EU endpoints and existing IHE MHD / XDS.b document sharing infrastructure while maintaining a strict POST-only national boundary, the architecture is structured into three conformance tiers:
 
@@ -147,14 +145,14 @@ To ensure seamless interoperability with European MyHealth@EU endpoints and exis
     (ITI-67/ITI-68) (ITI-18/ITI-43)  Repository
 ```
 
-#### 1. Belgian Consumer API (National Boundary)
+##### Belgian Consumer API (National Boundary)
 Initiating hubs and Belgian consumers **SHALL execute all transactions using HTTP POST**:
 * **Document Discovery**: `POST [base]/DocumentReference/_search` (request parameters in `application/x-www-form-urlencoded` body).
 * **Document Retrieval**: `POST [base]/DocumentReference/$retrieve-document` (request parameters in `application/fhir+json` `Parameters` body).
 
 Consumers do not need to know whether the backend repository uses IHE MHD, XDS.b, or local storage.
 
-#### 2. Belgian Gateway / Façade Translation
+##### Belgian Gateway / Façade Translation
 The gateway acts as a stable national façade, translating the Belgian POST operations onto the appropriate underlying document-sharing standard:
 
 ```
@@ -169,7 +167,7 @@ POST DocumentReference/$retrieve-document ──► MHD ITI-68 Retrieve Document
 
 For an XDS.b repository backend, the gateway resolves the transactions to **ITI-18 (Registry Stored Query)** and **ITI-43 (Retrieve Document Set)**.
 
-#### 3. IHE Interoperability Boundary
+##### IHE Interoperability Boundary
 Whenever an endpoint directly claims conformance to an IHE profile (such as cross-border communication with European NCPeH nodes), it complies with the normative IHE specification at that boundary:
 * `POST $retrieve-document` is a **Belgian FHIR Operation**, while the downstream gateway call `GET <attachment.url>` is standard **IHE ITI-68**.
 * The gateway preserves HTTP status codes and error semantics across the translation boundary:
@@ -183,7 +181,7 @@ Whenever an endpoint directly claims conformance to an IHE profile (such as cros
 | **`403 Forbidden`** | `403 Forbidden` | Access forbidden by downstream security policy. |
 | **`502 Bad Gateway`** | `502 Bad Gateway` / Timeout | Downstream repository unreachable. |
 
-### 5.3 Security Advantage of Gateway-Mediated Retrieval
+#### Security Advantage of Gateway-Mediated Retrieval
 By routing document retrieval through `POST /DocumentReference/$retrieve-document`, the gateway eliminates the need to expose raw internal repository URLs directly to consumers. The gateway validates authorization, resolves the repository endpoint, audits the transaction, and fetches the document without turning the retrieval interface into an open Server-Side Request Forgery (SSRF) vector.
 
 > **Normative Standards Statement**:  
@@ -191,7 +189,7 @@ By routing document retrieval through `POST /DocumentReference/$retrieve-documen
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html) — the inward-facing migration crosswalk.
 * **Next:** [Artifacts](artifacts.html) — the profiles, extensions, value sets, capability statements and examples referenced throughout this guide.

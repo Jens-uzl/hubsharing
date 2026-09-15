@@ -1,12 +1,10 @@
-# Telemonitoring Document Sharing (Remote Patient Monitoring)
-
 > **Where this page sits in the guide** — *Document Types*, page 2 of 2. Same structure as [Laboratory Reports](lab-report-sharing.html): one concrete payload end to end, using the envelope and transactions specified earlier in the guide.
 >
 > * **Read first:** [Envelope & Metadata](envelope-and-metadata.html) and [Transactions](transactions.html). The raw source message this transformation starts from is shown in [TMP Base Message](tmp-base-message.html).
 > * **Owned by this page:** the telemonitoring document architecture (`BeTelemonitoringComposition`, `TelemonitoringDiagnosticReport`), the TMP JSON → FHIR mapping, and a complete worked JSON example.
 > * **Previous:** [Laboratory Reports](lab-report-sharing.html) · **Next:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html)
 
-## 1. Overview & Business Context
+### Overview & Business Context
 
 Telemonitoring, or remote patient monitoring (TMP), is growing quickly in Belgium: chronic care programmes, post-discharge follow-up, ambulatory Holter monitoring in cardiology, diabetes care, oncology. The platforms behind them produce a steady stream of continuous and episodic sensor data, patient-reported outcome measures (PROMs) and automated diagnostic evaluations.
 
@@ -14,7 +12,7 @@ None of that is clinically useful while it stays inside the monitoring platform.
 
 ---
 
-## 2. Telemonitoring Document Architecture
+### Telemonitoring Document Architecture
 
 ```mermaid
 flowchart TD
@@ -56,7 +54,7 @@ flowchart TD
 
 ---
 
-## 3. Mapping from Proprietary TMP JSON to FHIR Document
+### Mapping from Proprietary TMP JSON to FHIR Document
 
 The Belgian Telemonitoring Project (TMP) moves proprietary JSON messages between device vendors, monitoring applications and hub source platforms such as hospitals, home-care organisations and monitoring centres; a complete example of one is shown in [TMP Base Message](tmp-base-message.html). The normative transformation into FHIR structures runs as follows:
 
@@ -96,7 +94,7 @@ flowchart TB
 
 ---
 
-## 4. Metadata Mapping for `getTransactionList` (MHD ITI-67)
+### Metadata Mapping for `getTransactionList` (MHD ITI-67)
 
 When shared via or published on the regional hub, the telemonitoring session is discoverable via `BeInterhubDocumentReference`. Only the telemonitoring-specific *values* are given here; the cardinality and meaning of each element are specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), and the search that returns it in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences):
 
@@ -110,7 +108,7 @@ When shared via or published on the regional hub, the telemonitoring session is 
 
 ---
 
-## 5. Complete JSON Document Walkthrough
+### Complete JSON Document Walkthrough
 
 Below is a complete, valid example of a shared Telemonitoring FHIR Document Bundle (`BundleTelemonitoringExample`):
 
@@ -316,7 +314,7 @@ Below is a complete, valid example of a shared Telemonitoring FHIR Document Bund
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [Laboratory Reports](lab-report-sharing.html) — the same pattern applied to laboratory results.
 * **Next:** [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html) — the migration crosswalk for existing KMEHR connectors.
