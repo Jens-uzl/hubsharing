@@ -1,5 +1,3 @@
-# Laboratory Report Document Sharing (LabReport)
-
 > **Where this page sits in the guide** — *Document Types*, page 1 of 2. This page shows **one concrete payload end to end**; it deliberately does not restate the envelope or the transactions, it only gives the laboratory-specific values for them.
 >
 > * **Read first:** [Envelope & Metadata](envelope-and-metadata.html) and [Transactions](transactions.html).
@@ -7,7 +5,7 @@
 > * **Related:** EU lab profile alignment → [EHDS Alignment](ehds-alignment.html#21-profile-alignment-matrix); legacy `labresult` KMEHR transactions → [KMEHR to FHIR Mapping](mapping-kmehr-to-hub.html).
 > * **Previous:** [End-to-End Encryption](end-to-end-encryption.html) · **Next:** [Telemonitoring](mapping-telemonitoring-to-hub.html)
 
-## 1. Overview & Business Context
+### Overview & Business Context
 
 To query individual laboratory results by patient and LOINC analyte code, see [Laboratory Observation Search (Transaction 3)](transactions.html#lab-observation-search), including its [request encoding and search parameters](transactions.html#lab-observation-search-parameters).
 
@@ -17,7 +15,7 @@ Under the modernized Interhub FHIR specification, every laboratory report is sha
 
 ---
 
-## 2. Document Architecture & Composition Structure
+### Document Architecture & Composition Structure
 
 A Belgian Laboratory Report FHIR Document is structured as follows:
 
@@ -67,15 +65,15 @@ flowchart TD
 
 ---
 
-## 3. Key Clinical Coding & Laboratory Disciplines
+### Key Clinical Coding & Laboratory Disciplines
 
-### 3.1 Standard Document & Category Identifiers
+#### Standard Document & Category Identifiers
 * **`Bundle.type`**: `#document` (Mandatory).
 * **`Composition.category`**: `https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-transaction#labresult` ("Laboratory Result").
 * **`Composition.type`**: `http://loinc.org#11502-2` ("Laboratory report").
 * **`DiagnosticReport.category`**: `http://terminology.hl7.org/CodeSystem/v2-0074#LAB` ("Laboratory").
 
-### 3.2 Laboratory Specialties & Section Codes
+#### Laboratory Specialties & Section Codes
 Sections inside the Composition group results by laboratory specialty:
 
 | Specialty / Panel | LOINC Code | LOINC Display Name |
@@ -90,7 +88,7 @@ Sections inside the Composition group results by laboratory specialty:
 
 ---
 
-## 4. Metadata Mapping for `getTransactionList` (MHD ITI-67)
+### Metadata Mapping for `getTransactionList` (MHD ITI-67)
 
 When the laboratory document is registered or indexed in the hub registry, the corresponding `BeInterhubDocumentReference` is populated as follows. Only the laboratory-specific *values* are given here; the cardinality and meaning of each element are specified in [Envelope & Metadata §2](envelope-and-metadata.html#2-element-by-element-specification-beinterhubdocumentreference), and the search that returns it in [Transactions §2](transactions.html#2-transaction-1-gettransactionlist-mhd-iti-67-find-documentreferences):
 
@@ -104,7 +102,7 @@ When the laboratory document is registered or indexed in the hub registry, the c
 
 ---
 
-## 5. Complete JSON Document Walkthrough
+### Complete JSON Document Walkthrough
 
 Below is a complete, valid example of a shared Laboratory Report FHIR Document Bundle (`BundleLabReportExample`):
 
@@ -387,9 +385,9 @@ Below is a complete, valid example of a shared Laboratory Report FHIR Document B
 
 ---
 
-## 6. Individual Lab Results: The Laboratory Observation Search (Transaction 3)
+### Individual Lab Results: The Laboratory Observation Search (Transaction 3)
 
-### 6.1 Two Ways to Reach the Same Result
+#### Two Ways to Reach the Same Result
 
 The same laboratory report can be reached in two ways across the federation:
 
@@ -400,7 +398,7 @@ The result is never a replacement for the report: every observation points to th
 
 ---
 
-### 6.2 How an Observation Relates to Its Report
+#### How an Observation Relates to Its Report
 
 Every result extracted from the report of [§5](#5-complete-json-document-walkthrough) is returned with **logical references only**: business identifiers that say *who* or *what* is meant, with no URL to fetch. The responding hub therefore needs no Patient, Practitioner or Organization endpoint.
 
@@ -448,7 +446,7 @@ The complete searchset response for this report is shown in [Transactions §4.7]
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [End-to-End Encryption](end-to-end-encryption.html) — whether this payload travels in plaintext (Tier 1) or encrypted (Tier 2).
 * **Next:** [Telemonitoring](mapping-telemonitoring-to-hub.html) — the second document type, structured the same way.

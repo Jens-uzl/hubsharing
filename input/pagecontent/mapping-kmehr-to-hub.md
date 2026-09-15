@@ -1,12 +1,10 @@
-# KMEHR to FHIR MHD Interhub Mapping Matrix
-
 > **Where this page sits in the guide** — *Migration & Alignment*, page 1 of 3. This is the crosswalk that makes the dual-stack gateway of [Architecture §4](architecture.html#4-dual-stack-gateway-architecture-transition-phase) implementable. Read it when you are migrating an existing KMEHR connector, not when you are learning the target model.
 >
 > * **Owned by this page:** KMEHR ↔ IHE XDS.b ↔ FHIR field mappings, code-system crosswalks, and the KMEHR encapsulation strategy for the transition period.
 > * **The target definitions live elsewhere:** the FHIR elements in the right-hand columns are specified in [Envelope & Metadata](envelope-and-metadata.html); the SOAP operations being replaced are specified in [Transactions](transactions.html); open architectural alignment discussions are in [IHE MHD Alignment](ihe-mhd-alignment.html).
 > * **Previous:** [Telemonitoring](mapping-telemonitoring-to-hub.html) · **Next:** [IHE MHD Alignment](ihe-mhd-alignment.html)
 
-## 1. Executive Summary & Mapping Scope
+### Executive Summary & Mapping Scope
 
 This page holds the normative, bi-directional mapping between three representations of the same information: legacy Belgian **KMEHR** XML as used in the SOAP Interhub Web Services (`getTransactionList`, `getTransaction`), the intermediate **IHE XDS.b / XCA** constructs, and the target **HL7® FHIR® R4 / IHE MHD Comprehensive** profiles.
 
@@ -53,7 +51,7 @@ This page maps *between* representations; it does not define the target. The FHI
 
 ---
 
-## 2. Master Metadata Mapping Matrix (KMEHR ↔ IHE MHD Comprehensive)
+### Master Metadata Mapping Matrix (KMEHR ↔ IHE MHD Comprehensive)
 
 | KMEHR Schema Element | IHE XDS.b Attribute | FHIR MHD Comprehensive Element | Mapping & Implementation Rule |
 | :--- | :--- | :--- | :--- |
@@ -73,7 +71,7 @@ This page maps *between* representations; it does not define the target. The FHI
 | Internal retrieval key | Repository endpoint | `content.attachment.url` | Direct RESTful retrieve URL for `$retrieve-document` / ITI-68 (`1..1 MS`). |
 | `transaction/date` + `time` | `creationTime` | `content.attachment.creation` | Creation instant normalized to UTC (`1..1 MS`). |
 
-### 2.1 What Actually Identifies a Transaction in KMEHR
+#### What Actually Identifies a Transaction in KMEHR
 
 This is the single most consequential difference between the legacy model and the FHIR one, and getting it wrong makes a gateway unimplementable.
 
@@ -107,9 +105,9 @@ One trap deserves naming: the `id[@S="ID-KMEHR"]` that appears on the `request` 
 
 ---
 
-## 3. Code System & Value Set Crosswalks
+### Code System & Value Set Crosswalks
 
-### 3.1 Document Category: `CD-TRANSACTION` to FHIR Coding
+#### Document Category: `CD-TRANSACTION` to FHIR Coding
 
 | KMEHR `CD-TRANSACTION` Code | Display Name | Target FHIR `category.coding` |
 | :--- | :--- | :--- |
@@ -123,7 +121,7 @@ One trap deserves naming: the `id[@S="ID-KMEHR"]` that appears on the `request` 
 | `radiology` | Radiology / Imaging Report | `https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-transaction#radiology` |
 | `vaccination` | Vaccination Record | `https://www.ehealth.fgov.be/standards/fhir/core/CodeSystem/cd-transaction#vaccination` |
 
-### 3.2 Confidentiality: `CD-CONFIDENTIALITY` to HL7 v3 Confidentiality
+#### Confidentiality: `CD-CONFIDENTIALITY` to HL7 v3 Confidentiality
 
 | KMEHR Confidentiality Value | HL7 v3 Code | Display | Belgian Access Policy (applied by the initiating hub) |
 | :--- | :--- | :--- | :--- |
@@ -131,7 +129,7 @@ One trap deserves naming: the `id[@S="ID-KMEHR"]` that appears on the `request` 
 | `restricted` | `R` | Restricted | The initiating hub restricts disclosure to specialty care providers / explicit therapeutic links. |
 | `secret` | `V` | Very Restricted | Sealed document; the initiating hub restricts disclosure to the original author and their delegates. |
 
-### 3.3 Healthcare Party Type: `CD-HCPARTY` to Contained FHIR Resources
+#### Healthcare Party Type: `CD-HCPARTY` to Contained FHIR Resources
 
 The table below maps the Belgian `CD-HCPARTY` taxonomy to FHIR contained resources and extensions. In particular, the organisation types (`org…`) define the full range of connected care organisations (**data sources / hub sources**) participating in Interhub exchanges beyond acute care hospitals.
 
@@ -145,7 +143,7 @@ The table below maps the Belgian `CD-HCPARTY` taxonomy to FHIR contained resourc
 
 ---
 
-## 4. Encapsulation Strategy: FHIR Document inside KMEHR (Transition Phase)
+### Encapsulation Strategy: FHIR Document inside KMEHR (Transition Phase)
 
 Some systems will not be ready for native RESTful FHIR when the migration begins. Throughout the transition, a FHIR Document Bundle can be delivered inside an ordinary KMEHR message, encapsulated in a `<lnk>` multimedia element:
 
@@ -176,7 +174,7 @@ Some systems will not be ready for native RESTful FHIR when the migration begins
 
 ---
 
-## 5. Character Encoding of Legacy Payloads
+### Character Encoding of Legacy Payloads
 
 Legacy KMEHR payloads are not reliably UTF-8, whereas a FHIR gateway must emit valid UTF-8 in every `application/fhir+json` response:
 1. **Declared vs. actual encoding**: ETEE-sealed folders arrive as `<Base64EncryptedValue encoding="…">`. If parsing fails, fall back to `ISO-8859-1`.
@@ -184,7 +182,7 @@ Legacy KMEHR payloads are not reliably UTF-8, whereas a FHIR gateway must emit v
 
 ---
 
-## Continue reading
+### Continue reading
 
 * **Previous:** [Telemonitoring](mapping-telemonitoring-to-hub.html) — the second of the two document types being mapped.
 * **Next:** [IHE MHD Alignment](ihe-mhd-alignment.html) — architectural analysis, Contained pattern rationale, and open WG topics.
